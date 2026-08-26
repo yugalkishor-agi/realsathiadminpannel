@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <path android:pathData="M28,176L60,42H92L58,149L52,161Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="38"
+                android:startY="166"
+                android:endX="172"
+                android:endY="42"
+                android:type="linear">
+                <item android:color="@color/brand_logo_purple" android:offset="0" />
+                <item android:color="@color/brand_logo_violet" android:offset="0.46" />
+                <item android:color="@color/brand_logo_pink" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path android:pathData="M58,42H174C166,60 149,72 122,74H50Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="38"
+                android:startY="166"
+                android:endX="172"
+                android:endY="42"
+                android:type="linear">
+                <item android:color="@color/brand_logo_purple" android:offset="0" />
+                <item android:color="@color/brand_logo_violet" android:offset="0.46" />
+                <item android:color="@color/brand_logo_pink" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path android:pathData="M52,92H156C148,110 130,124 104,126H44Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="38"
+                android:startY="166"
+                android:endX="172"
+                android:endY="42"
+                android:type="linear">
+                <item android:color="@color/brand_logo_purple" android:offset="0" />
+                <item android:color="@color/brand_logo_violet" android:offset="0.46" />
+                <item android:color="@color/brand_logo_pink" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path android:pathData="M70,136H92C87,148 78,159 66,166Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="38"
+                android:startY="166"
+                android:endX="172"
+                android:endY="42"
+                android:type="linear">
+                <item android:color="@color/brand_logo_purple" android:offset="0" />
+                <item android:color="@color/brand_logo_violet" android:offset="0.46" />
+                <item android:color="@color/brand_logo_pink" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

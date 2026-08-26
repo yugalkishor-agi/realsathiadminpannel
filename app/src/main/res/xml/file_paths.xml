@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path
+        name="host_story_files"
+        path="host_story_uploads/" />
+    <files-path
+        name="host_kyc_files"
+        path="host_kyc_uploads/" />
+</paths>

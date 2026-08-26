@@ -1,0 +1,13 @@
+
+> frndzz-backend@1.0.0 dev
+> node --watch src/server.js
+
+Frndzz backend listening on 0.0.0.0:4000
+Restarting 'src/server.js'
+Frndzz backend listening on 0.0.0.0:4000
+Restarting 'src/server.js'
+Frndzz backend listening on 0.0.0.0:4000
+Restarting 'src/server.js'
+Frndzz backend listening on 0.0.0.0:4000
+Restarting 'src/server.js'
+Frndzz backend listening on 0.0.0.0:4000

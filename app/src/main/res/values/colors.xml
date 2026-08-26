@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_bg">#FF0A0508</color>
+    <color name="card_bg">#FF1A0B14</color>
+    <color name="accent_primary">#FFEE2B9D</color>
+    <color name="accent_secondary">#FFA855F7</color>
+    <color name="accent_lime">#FFBEF264</color>
+    <color name="accent_primary_dark">#FF5F1F7A</color>
+    <color name="accent_glow">#66EE2B9D</color>
+    <color name="brand_surface_black">#FF040206</color>
+    <color name="brand_logo_purple">#FF5A12F6</color>
+    <color name="brand_logo_violet">#FF9A10E3</color>
+    <color name="brand_logo_pink">#FFFF0D8F</color>
+    <color name="brand_glow_purple">#335A12F6</color>
+    <color name="brand_glow_pink">#33FF0D8F</color>
+    <color name="text_primary">#FFFDF7FB</color>
+    <color name="text_secondary">#FFCDB5C6</color>
+    <color name="divider_dark">#FF3B1B2C</color>
+    <color name="surface_dark">#FF14080F</color>
+    <color name="success_green">#FFBEF264</color>
+    <color name="auth_login_background">#FF0A0508</color>
+    <color name="auth_surface">#CC1A0B14</color>
+    <color name="auth_surface_stroke">#66A855F7</color>
+    <color name="auth_text_primary">#FFFDF7FB</color>
+    <color name="auth_text_hint">#FFB996B1</color>
+    <color name="auth_disclaimer_text">#AAB58EA9</color>
+    <color name="auth_button_background">#FFEE2B9D</color>
+    <color name="auth_button_ripple">#33BEF264</color>
+    <color name="auth_button_text">#FFFFFFFF</color>
+    <color name="auth_error">#FFFF7AB9</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

@@ -1,0 +1,23 @@
+{
+  "name": "frndzz-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend APIs for Frndzz calling app",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "check:syntax": "node --check src/server.js && node --check src/app.js && node --check src/routes/index.js && node --check src/routes/auth.routes.js && node --check src/routes/support.routes.js && node --check src/controllers/auth.controller.js && node --check src/controllers/support.controller.js && node --check src/services/auth.service.js && node --check src/services/support.service.js && node --check src/services/otp.service.js && node --check src/middlewares/auth.middleware.js && node --check src/validators/support.validator.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

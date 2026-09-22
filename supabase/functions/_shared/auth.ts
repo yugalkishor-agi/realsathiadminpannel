@@ -2,6 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const encoder = new TextEncoder();
 
+function requiredJwtSecret(name: "JWT_ACCESS_SECRET" | "JWT_REFRESH_SECRET") {
+  const secret = Deno.env.get(name);
+  if (!secret) throw new Error(`${name} is missing.`);
+  return secret;
+}
+
 export const DEFAULT_LANGUAGE = "All";
 export const DEFAULT_ACCOUNT_MODE = "customer";
 export const DEFAULT_HOST_STATUS = "not_applicable";
@@ -29,7 +35,7 @@ export function jsonResponse(data: unknown, status = 200) {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "authorization, x-session-token, x-client-info, apikey, content-type",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     },
   });
 }
@@ -39,9 +45,17 @@ export function corsResponse() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "authorization, x-session-token, x-client-info, apikey, content-type",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     },
   });
+}
+
+export function requestErrorResponse(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : "";
+  if (message.toLowerCase().includes("token") || message.includes("Missing session")) {
+    return jsonResponse({ message }, 401);
+  }
+  return jsonResponse({ message: fallback }, 500);
 }
 
 export function normalizeIndianPhone(rawValue: string) {
@@ -115,7 +129,7 @@ export function buildDisplayName(seed = "") {
     ? normalizedSeed.slice(0, 6)
     : randomAlphaChunk(6);
 
-  return `frndzzz_${suffix}`;
+  return `realsaathi_${suffix}`;
 }
 
 export function normalizeInterests(rawValue: unknown) {
@@ -203,8 +217,12 @@ export function buildUserSession(userRow: Record<string, unknown>) {
     id: userId,
     phoneNumber: formatPhoneForSession(phone),
     displayName: nickname,
-    publicId: String(userRow.public_id ?? "").trim() || null,
     isHost: String(userRow.role ?? "").trim().toLowerCase() === "host",
+    deviceId: String(userRow.device_id ?? "").trim() || null,
+    deviceBrand: String(userRow.device_brand ?? "").trim() || null,
+    countryCode: String(userRow.signup_country ?? "").trim() || null,
+    appBrand: String(userRow.app_brand ?? "RealSaathi").trim() || "RealSaathi",
+    sessionVersion: Number(userRow.session_version ?? 0) || 0,
   };
 }
 
@@ -223,7 +241,10 @@ export function buildProfilePayload(userRow: Record<string, unknown>) {
   return {
     nickname,
     username: nickname,
-    publicId: String(userRow.public_id ?? "").trim() || null,
+    deviceId: String(userRow.device_id ?? "").trim() || null,
+    deviceBrand: String(userRow.device_brand ?? "").trim() || null,
+    countryCode: String(userRow.signup_country ?? "").trim() || null,
+    appBrand: String(userRow.app_brand ?? "RealSaathi").trim() || "RealSaathi",
     gender: String(userRow.gender ?? "").trim(),
     preferredLanguage:
       String(userRow.language ?? "").trim() || DEFAULT_LANGUAGE,
@@ -371,8 +392,7 @@ export async function authenticateRequest(req: Request) {
     throw new Error("Missing session token.");
   }
 
-  const accessSecret =
-    Deno.env.get("JWT_ACCESS_SECRET") ?? "frndzz-dev-access-secret";
+  const accessSecret = requiredJwtSecret("JWT_ACCESS_SECRET");
   const payload = await decodeVerifiedJwt(token, accessSecret, "access token");
   const expiresAt = Number(payload?.exp ?? 0);
   const userId = String(payload?.sub ?? "").trim();
@@ -383,6 +403,17 @@ export async function authenticateRequest(req: Request) {
 
   if (expiresAt > 0 && expiresAt <= Math.floor(Date.now() / 1000)) {
     throw new Error("Access token expired.");
+  }
+
+  const supabase = createAdminClient();
+  const { data: currentUser, error } = await supabase
+    .from("users")
+    .select("session_version")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error || !currentUser) throw new Error("Unable to validate session.");
+  if (Number(payload?.sessionVersion ?? 0) !== Number(currentUser.session_version ?? 0)) {
+    throw new Error("Access token session replaced by a login on another device.");
   }
 
   return {
@@ -399,8 +430,7 @@ export async function authenticateRefreshToken(refreshToken: string) {
     throw new Error("Missing refresh token.");
   }
 
-  const refreshSecret =
-    Deno.env.get("JWT_REFRESH_SECRET") ?? "frndzz-dev-refresh-secret";
+  const refreshSecret = requiredJwtSecret("JWT_REFRESH_SECRET");
   const payload = await decodeVerifiedJwt(token, refreshSecret, "refresh token");
   const expiresAt = Number(payload?.exp ?? 0);
   const userId = String(payload?.sub ?? "").trim();
@@ -428,11 +458,10 @@ export async function issueAuthTokens(userSession: {
   id: string;
   phoneNumber: string;
   isHost: boolean;
+  sessionVersion?: number;
 }) {
-  const accessSecret =
-    Deno.env.get("JWT_ACCESS_SECRET") ?? "frndzz-dev-access-secret";
-  const refreshSecret =
-    Deno.env.get("JWT_REFRESH_SECRET") ?? "frndzz-dev-refresh-secret";
+  const accessSecret = requiredJwtSecret("JWT_ACCESS_SECRET");
+  const refreshSecret = requiredJwtSecret("JWT_REFRESH_SECRET");
   const accessExpiresIn = durationToSeconds(
     Deno.env.get("JWT_ACCESS_EXPIRES_IN") ?? "15m",
     900
@@ -447,8 +476,9 @@ export async function issueAuthTokens(userSession: {
     {
       phoneNumber: userSession.phoneNumber,
       isHost: userSession.isHost,
-      iss: "frndzz-edge-function",
+      iss: "realsaathi-edge-function",
       sub: userSession.id,
+      sessionVersion: Number(userSession.sessionVersion ?? 0),
       iat: now,
       exp: now + accessExpiresIn,
     },
@@ -458,8 +488,9 @@ export async function issueAuthTokens(userSession: {
   const refreshToken = await signJwt(
     {
       type: "refresh",
-      iss: "frndzz-edge-function",
+      iss: "realsaathi-edge-function",
       sub: userSession.id,
+      sessionVersion: Number(userSession.sessionVersion ?? 0),
       iat: now,
       exp: now + refreshExpiresIn,
     },

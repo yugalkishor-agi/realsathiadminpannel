@@ -31,10 +31,10 @@ fun authEndpoint(baseUrl: String, authMode: String, backendPath: String, functio
 }
 
 val defaultRemoteBaseUrl = "https://qefskbzqbduruznfshao.supabase.co/"
-val debugBaseUrl = normalizeBaseUrl(localConfig("FRNDZZ_DEBUG_BASE_URL", defaultRemoteBaseUrl))
-val releaseBaseUrl = localConfig("FRNDZZ_RELEASE_BASE_URL", defaultRemoteBaseUrl)
-val debugAuthMode = localConfig("FRNDZZ_AUTH_MODE", "supabase_edge")
-val releaseAuthMode = localConfig("FRNDZZ_RELEASE_AUTH_MODE", "supabase_edge")
+val debugBaseUrl = normalizeBaseUrl(localConfig("REALSAATHI_DEBUG_BASE_URL", defaultRemoteBaseUrl))
+val releaseBaseUrl = localConfig("REALSAATHI_RELEASE_BASE_URL", defaultRemoteBaseUrl)
+val debugAuthMode = localConfig("REALSAATHI_AUTH_MODE", "supabase_edge")
+val releaseAuthMode = localConfig("REALSAATHI_RELEASE_AUTH_MODE", "supabase_edge")
 val debugSendOtpUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/auth/otp/send", "send-otp")
 val debugVerifyOtpUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/auth/otp/verify", "verify-otp")
 val debugRefreshSessionUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/auth/session/refresh", "refresh-session")
@@ -52,6 +52,9 @@ val debugReportUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/report", "rep
 val debugUnblockUserUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/report/unblock", "unblock-user")
 val debugWalletSummaryUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/wallet/summary", "wallet-summary")
 val debugRecordWalletTransactionUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/wallet/record", "record-wallet-transaction")
+val debugRechargeOrderUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/wallet/recharge", "recharge-order")
+val debugDeleteAccountUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/profile/delete", "delete-account")
+val debugZegoTokenUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/calling/token", "zego-token")
 val releaseSendOtpUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/auth/otp/send", "send-otp")
 val releaseVerifyOtpUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/auth/otp/verify", "verify-otp")
 val releaseRefreshSessionUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/auth/session/refresh", "refresh-session")
@@ -69,6 +72,9 @@ val releaseReportUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/report"
 val releaseUnblockUserUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/report/unblock", "unblock-user")
 val releaseWalletSummaryUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/wallet/summary", "wallet-summary")
 val releaseRecordWalletTransactionUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/wallet/record", "record-wallet-transaction")
+val releaseRechargeOrderUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/wallet/recharge", "recharge-order")
+val releaseDeleteAccountUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/profile/delete", "delete-account")
+val releaseZegoTokenUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/calling/token", "zego-token")
 val adbExecutable = sequenceOf(
     localProperties.getProperty("sdk.dir")?.let { File(it, "platform-tools/adb.exe") },
     localProperties.getProperty("sdk.dir")?.let { File(it, "platform-tools/adb") },
@@ -80,7 +86,7 @@ val adbExecutable = sequenceOf(
 
 val reverseDebugBackendPort by tasks.registering {
     group = "android"
-    description = "Routes a physical device to the local Frndzz backend during development."
+    description = "Routes a physical device to the local RealSaathi backend during development."
 
     doLast {
         val adb = adbExecutable
@@ -101,7 +107,7 @@ val reverseDebugBackendPort by tasks.registering {
 }
 
 android {
-    namespace = "com.incoteam.frndzz"
+    namespace = "com.incoteam.realsaathi"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -109,8 +115,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.incoteam.frndzz"
-        minSdk = 24
+        applicationId = "com.incoteam.realsaathi"
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -138,6 +144,9 @@ android {
             buildConfigField("String", "UNBLOCK_USER_URL", "\"$debugUnblockUserUrl\"")
             buildConfigField("String", "WALLET_SUMMARY_URL", "\"$debugWalletSummaryUrl\"")
             buildConfigField("String", "RECORD_WALLET_TRANSACTION_URL", "\"$debugRecordWalletTransactionUrl\"")
+            buildConfigField("String", "RECHARGE_ORDER_URL", "\"$debugRechargeOrderUrl\"")
+            buildConfigField("String", "DELETE_ACCOUNT_URL", "\"$debugDeleteAccountUrl\"")
+            buildConfigField("String", "ZEGO_TOKEN_URL", "\"$debugZegoTokenUrl\"")
         }
 
         release {
@@ -159,6 +168,9 @@ android {
             buildConfigField("String", "UNBLOCK_USER_URL", "\"$releaseUnblockUserUrl\"")
             buildConfigField("String", "WALLET_SUMMARY_URL", "\"$releaseWalletSummaryUrl\"")
             buildConfigField("String", "RECORD_WALLET_TRANSACTION_URL", "\"$releaseRecordWalletTransactionUrl\"")
+            buildConfigField("String", "RECHARGE_ORDER_URL", "\"$releaseRechargeOrderUrl\"")
+            buildConfigField("String", "DELETE_ACCOUNT_URL", "\"$releaseDeleteAccountUrl\"")
+            buildConfigField("String", "ZEGO_TOKEN_URL", "\"$releaseZegoTokenUrl\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -202,6 +214,10 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.cashfree.pg:api:2.4.0")
+    implementation("im.zego:zego_uikit_prebuilt_call_android:3.0.4")
+    implementation("im.zego:zego_uikit_android:3.6.5")
+    implementation("im.zego:zego_uikit_signaling_plugin_android:3.0.3")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

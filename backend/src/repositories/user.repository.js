@@ -62,7 +62,7 @@ class UserRepository {
             if (this.isSchemaError(error)) {
                 return null;
             }
-            throw new AppError("Failed to check Frndzz ID.", 500, error.message);
+            throw new AppError("Failed to check RealSaathi ID.", 500, error.message);
         }
 
         return data;

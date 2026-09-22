@@ -2,7 +2,7 @@ const app = require("./app");
 const env = require("./config/env");
 
 const server = app.listen(env.port, "0.0.0.0", () => {
-    console.log(`Frndzz backend listening on 0.0.0.0:${env.port}`);
+    console.log(`RealSaathi backend listening on 0.0.0.0:${env.port}`);
 });
 
 process.on("unhandledRejection", (error) => {

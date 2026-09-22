@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const env = require("../config/env");
 const AppError = require("../utils/app-error");
+const { supabase } = require("../config/supabase");
 
 function getSessionToken(req) {
     const headerValue =
@@ -13,7 +14,7 @@ function getSessionToken(req) {
     return String(headerValue).trim().replace(/^Bearer\s+/i, "");
 }
 
-function authenticateAccessToken(req, res, next) {
+async function authenticateAccessToken(req, res, next) {
     try {
         const token = getSessionToken(req);
         if (!token) {
@@ -21,11 +22,20 @@ function authenticateAccessToken(req, res, next) {
         }
 
         const payload = jwt.verify(token, env.jwt.accessSecret, {
-            issuer: "frndzz-backend"
+            issuer: "realsaathi-backend"
         });
 
         if (!payload?.sub) {
             throw new AppError("Access token subject is missing.", 401);
+        }
+
+        const { data: currentUser, error: sessionError } = await supabase
+            .from("users")
+            .select("session_version")
+            .eq("id", payload.sub)
+            .maybeSingle();
+        if (!sessionError && currentUser && Number(payload.sessionVersion || 0) !== Number(currentUser.session_version || 0)) {
+            throw new AppError("Session replaced by a login on another device.", 401);
         }
 
         req.auth = {

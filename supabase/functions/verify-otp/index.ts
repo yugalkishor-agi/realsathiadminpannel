@@ -48,6 +48,11 @@ function buildNewUser(phoneNumber: string) {
     community_city: "",
     community_about: "",
     community_experience: "",
+    device_id: "",
+    device_brand: "",
+    signup_country: "",
+    app_brand: "RealSaathi",
+    session_version: 0,
   };
 }
 
@@ -143,6 +148,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const phoneNumber = normalizeIndianPhone(body?.phoneNumber);
     const otpCode = String(body?.otpCode ?? "").trim();
+    const deviceId = String(body?.deviceId ?? "").trim().slice(0, 200);
+    const deviceBrand = String(body?.deviceBrand ?? body?.brandName ?? "").trim().slice(0, 120);
+    const signupCountry = String(body?.countryCode ?? "").trim().toUpperCase().slice(0, 8);
+    const appBrand = String(body?.appBrand ?? "RealSaathi").trim().slice(0, 80) || "RealSaathi";
     const dbPhoneNumber = digitsOnly(phoneNumber);
 
     if (!phoneNumber) {
@@ -255,46 +264,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: walletRecord, error: walletLookupError } = await supabase
-      .from("wallet")
-      .select("*")
-      .eq("user_id", userRecord.id)
-      .maybeSingle();
-
-    if (walletLookupError) {
-      console.error("wallet lookup error", walletLookupError);
-    }
-
-    if (!walletRecord) {
-      const { error: walletInsertError } = await supabase
-        .from("wallet")
-        .insert([
-          {
-            user_id: userRecord.id,
-            balance: 0,
-            total_spent: 0,
-            total_purchased: 0,
-          },
-        ]);
-
-      if (walletInsertError) {
-        console.error("wallet insert error", walletInsertError);
-      }
-    }
-
-    const { data: lastActiveUser } = await supabase
+    const { data: lastActiveUser, error: sessionUpdateError } = await supabase
       .from("users")
       .update({
         last_active: new Date().toISOString(),
         is_online: true,
+        device_id: deviceId,
+        device_brand: deviceBrand,
+        signup_country: String(userRecord.signup_country ?? "").trim() || signupCountry,
+        app_brand: appBrand,
+        session_version: Number(userRecord.session_version ?? 0) + 1,
       })
       .eq("id", userRecord.id)
       .select("*")
       .single();
 
-    if (lastActiveUser) {
-      userRecord = lastActiveUser;
+    if (sessionUpdateError || !lastActiveUser) {
+      return jsonResponse({ message: "Unable to start a secure session." }, 500);
     }
+    userRecord = lastActiveUser;
 
     const userSession = buildUserSession(userRecord);
     const tokens = await issueAuthTokens(userSession);

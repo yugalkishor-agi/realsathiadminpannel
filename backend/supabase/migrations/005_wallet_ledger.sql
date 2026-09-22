@@ -11,7 +11,7 @@ create table if not exists public.wallet_ledger (
     status text not null default 'completed',
     metadata jsonb not null default '{}'::jsonb,
     created_at timestamptz not null default now(),
-    constraint wallet_ledger_kind_check check (kind in ('audio_call', 'video_call', 'chat', 'gift', 'payment', 'adjustment')),
+    constraint wallet_ledger_kind_check check (kind in ('audio_call', 'video_call', 'chat', 'payment', 'adjustment')),
     constraint wallet_ledger_status_check check (status in ('completed', 'rejected', 'pending'))
 );
 

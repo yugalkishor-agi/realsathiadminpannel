@@ -32,7 +32,7 @@ alter table public.users alter column role set default 'user';
 alter table public.users alter column language set default 'All';
 
 update public.users
-set username = coalesce(nullif(trim(username), ''), 'frndzzz_' || right(coalesce(phone, '0000'), 4)),
+set username = coalesce(nullif(trim(username), ''), 'realsaathi_' || right(coalesce(phone, '0000'), 4)),
     gender = coalesce(gender, ''),
     language = coalesce(nullif(trim(language), ''), 'All'),
     role = coalesce(nullif(trim(role), ''), 'user'),

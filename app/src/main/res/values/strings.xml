@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Frndzzz</string>
-    <string name="login_brand">FRNDZZZ</string>
+    <string name="app_name">RealSaathi</string>
+    <string name="login_brand">RealSaathi</string>
     <string name="login_overline">LIVE ACCESS</string>
     <string name="otp_overline">VERIFICATION</string>
     <string name="login_title">Login to get started</string>
@@ -18,7 +18,7 @@
     <string name="login_fast_chip">Fast profile setup</string>
     <string name="login_calls_chip">Calls, chat and wallet</string>
     <string name="login_country_code">+91</string>
-    <string name="login_terms_disclaimer">By continuing, you agree to Frndzzz\'s Terms &amp; Conditions and OTP updates on SMS or WhatsApp.</string>
+    <string name="login_terms_disclaimer">By continuing, you agree to RealSaathi\'s Terms &amp; Conditions and OTP updates on SMS or WhatsApp.</string>
     <string name="otp_title">Enter OTP to get started</string>
     <string name="otp_subtitle">Code sent to %1$s</string>
     <string name="otp_helper">Enter the 6-digit OTP received on WhatsApp</string>
@@ -52,5 +52,5 @@
     <string name="content_desc_india_flag">India flag</string>
     <string name="content_desc_country_selector">Country selector</string>
     <string name="content_desc_edit_number">Edit number</string>
-    <string name="content_desc_brand_logo">Frndzzz brand logo</string>
+    <string name="content_desc_brand_logo">RealSaathi brand logo</string>
 </resources>

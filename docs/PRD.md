@@ -1,6 +1,6 @@
 # Dostt-Style App Product Requirements Document
 
-Base: Frndzz PRD plus Dostt-style discovery/matching, topic-based conversations, and anonymity-first identity. Earning model remains open to all verified hosts and is not gender-restricted.
+Base: RealSaathi PRD plus Dostt-style discovery/matching, topic-based conversations, and anonymity-first identity. Earning model remains open to all verified hosts and is not gender-restricted.
 
 ## 1. Product Overview
 

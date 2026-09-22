@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { userId } = await authenticateRefreshToken(body?.refreshToken);
+    const refreshSession = await authenticateRefreshToken(body?.refreshToken);
+    const { userId } = refreshSession;
     const supabase = createAdminClient();
 
     const { data: currentUser, error: currentUserError } = await supabase
@@ -33,6 +34,9 @@ Deno.serve(async (req) => {
     }
 
     const userSession = buildUserSession(currentUser);
+    if (Number(refreshSession.raw?.sessionVersion ?? 0) !== Number(userSession.sessionVersion ?? 0)) {
+      return jsonResponse({ message: "Refresh token session replaced by a login on another device." }, 401);
+    }
     const tokens = await issueAuthTokens(userSession);
 
     return jsonResponse({

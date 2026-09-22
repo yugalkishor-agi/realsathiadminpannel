@@ -90,10 +90,12 @@ function validateNickname(input) {
 function isDefaultNickname(input) {
     const text = String(input || "").trim().toLowerCase();
     return !text ||
-        text === "frndzzz_user" ||
-        text === "frndzzz user" ||
-        text === "frndzz user" ||
-        text.startsWith("frndzzz_");
+        text === "realsaathi user" ||
+        text.startsWith("realsaathi_") ||
+        text === "realsaathi_user" ||
+        text === "realsaathi user" ||
+        text === "realsaathi user" ||
+        text.startsWith("realsaathi_");
 }
 
 function normalizeHostDisplayName(input) {
@@ -143,7 +145,7 @@ async function generateUniquePublicId(userRepository, seed = "", currentUserId =
         }
     }
 
-    throw new AppError("Unable to generate unique Frndzz ID. Please try again.", 500);
+    throw new AppError("Unable to generate unique RealSaathi ID. Please try again.", 500);
 }
 
 router.post("/save", authenticateAccessToken, asyncHandler(async (req, res) => {
@@ -209,6 +211,39 @@ router.post("/save", authenticateAccessToken, asyncHandler(async (req, res) => {
         user: mapUserSession(userRecord, profileRecord),
         profile: mapUserProfile(userRecord, profileRecord)
     });
+}));
+
+router.post("/delete", authenticateAccessToken, asyncHandler(async (req, res) => {
+    const { data: user, error: lookupError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", req.auth.userId)
+        .single();
+    if (lookupError || !user) {
+        res.status(404).json({ message: "Account not found." });
+        return;
+    }
+    if (user.role === "host") {
+        for (const purpose of ["profile_photo", "story"]) {
+            const { data: files, error: listError } = await supabase.storage
+                .from("host-media").list(`${req.auth.userId}/${purpose}`, { limit: 100 });
+            if (listError && !/not found/i.test(listError.message)) throw listError;
+            const paths = (files || []).filter((file) => file.name && file.id)
+                .map((file) => `${req.auth.userId}/${purpose}/${file.name}`);
+            if (paths.length) {
+                const { error: removeError } = await supabase.storage.from("host-media").remove(paths);
+                if (removeError) throw removeError;
+            }
+        }
+    }
+    const phone = user.phone || user.phone_number;
+    if (phone) {
+        const { error: otpError } = await supabase.from("otp_codes").delete().eq("phone", phone);
+        if (otpError && !/schema cache|could not find|relation/i.test(otpError.message || "")) throw otpError;
+    }
+    const { error } = await supabase.from("users").delete().eq("id", req.auth.userId);
+    if (error) throw error;
+    res.status(200).json({ deleted: true });
 }));
 
 module.exports = router;

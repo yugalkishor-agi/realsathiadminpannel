@@ -23,7 +23,7 @@ app.use(express.json());
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "ok",
-        service: "frndzz-backend",
+        service: "realsaathi-backend",
         environment: env.nodeEnv
     });
 });

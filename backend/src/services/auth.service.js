@@ -69,7 +69,7 @@ class AuthService {
         };
     }
 
-    async verifyOtp({ phoneNumber, otpCode, requestId }) {
+    async verifyOtp({ phoneNumber, otpCode, requestId, deviceId = "", deviceBrand = "", countryCode = "", appBrand = "RealSaathi" }) {
         const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
         const dbPhone = this.toDatabasePhone(normalizedPhone);
         let request = await this.otpRepository.findByPhone(dbPhone);
@@ -119,7 +119,12 @@ class AuthService {
         const { userRecord, isNewUser } = await this.findOrCreateUser(normalizedPhone);
         const activeUserRecord = await this.userRepository.updateUser(userRecord.id, {
             last_active: new Date().toISOString(),
-            is_online: true
+            is_online: true,
+            device_id: deviceId,
+            device_brand: deviceBrand,
+            signup_country: countryCode,
+            app_brand: appBrand,
+            session_version: Number(userRecord.session_version || 0) + 1
         });
 
         const userSession = mapUserSession(activeUserRecord);
@@ -168,7 +173,7 @@ class AuthService {
             }
         }
 
-        throw new AppError("Unable to generate unique Frndzz ID. Please try again.", 500);
+        throw new AppError("Unable to generate unique RealSaathi ID. Please try again.", 500);
     }
 
     buildNewUser(phoneNumber, publicId) {
@@ -199,7 +204,12 @@ class AuthService {
             community_name: "",
             community_city: "",
             community_about: "",
-            community_experience: ""
+            community_experience: "",
+            device_id: "",
+            device_brand: "",
+            signup_country: "",
+            app_brand: "RealSaathi",
+            session_version: 0
         };
     }
 
@@ -277,6 +287,11 @@ class AuthService {
         if (userRecord.community_experience == null) {
             updates.community_experience = "";
         }
+        if (userRecord.device_id == null) updates.device_id = "";
+        if (userRecord.device_brand == null) updates.device_brand = "";
+        if (userRecord.signup_country == null) updates.signup_country = "";
+        if (userRecord.app_brand == null) updates.app_brand = "RealSaathi";
+        if (userRecord.session_version == null) updates.session_version = 0;
 
         return updates;
     }
@@ -289,7 +304,7 @@ class AuthService {
             }
         }
 
-        throw new AppError("Unable to generate unique Frndzz ID. Please try again.", 500);
+        throw new AppError("Unable to generate unique RealSaathi ID. Please try again.", 500);
     }
 
     isPublicIdCollisionError(error) {

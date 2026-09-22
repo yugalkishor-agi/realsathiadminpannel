@@ -1,5 +1,5 @@
 create sequence if not exists public.users_public_id_seq
-  start with 100001
+  start with 10000001
   increment by 1;
 
 alter table public.users

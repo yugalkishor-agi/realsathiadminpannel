@@ -13,7 +13,7 @@ const FAST_PHONE_NUMBER_ID =
 const FAST_MESSAGE_ID =
   Deno.env.get("FAST2SMS_WHATSAPP_MESSAGE_ID") ?? "12725";
 const FAST_TEMPLATE_NAME =
-  Deno.env.get("FAST2SMS_WHATSAPP_TEMPLATE_NAME") ?? "frndzz_otp";
+  Deno.env.get("FAST2SMS_WHATSAPP_TEMPLATE_NAME") ?? "realsaathi_otp";
 const FAST_TEMPLATE_LANGUAGE =
   Deno.env.get("FAST2SMS_WHATSAPP_TEMPLATE_LANGUAGE") ?? "en";
 const OTP_EXPIRY_SECONDS = Number(Deno.env.get("OTP_EXPIRY_SECONDS") ?? "300");

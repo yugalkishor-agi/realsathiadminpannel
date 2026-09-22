@@ -104,96 +104,33 @@ Deno.serve(async (req) => {
       Object.assign(currentUser, refreshedUser);
     }
 
-    const { data: callRows, error: callRowsError } = await supabase
-      .from("call_logs")
-      .select("caller_id, call_type, duration_seconds, cost, created_at, call_status")
-      .eq("receiver_id", userId)
+    const { data: ledgerRows, error: ledgerError } = await supabase
+      .from("wallet_ledger")
+      .select("kind, title, rupees_delta, metadata, created_at, status")
+      .eq("user_id", userId)
+      .eq("status", "completed")
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(100);
 
-    if (callRowsError) {
-      return jsonResponse({ message: callRowsError.message }, 500);
-    }
-
-    const { data: allCallAmounts, error: allCallAmountsError } = await supabase
-      .from("call_logs")
-      .select("cost, created_at, call_status")
-      .eq("receiver_id", userId);
-
-    if (allCallAmountsError) {
-      return jsonResponse({ message: allCallAmountsError.message }, 500);
-    }
-
-    const { data: giftRows, error: giftRowsError } = await supabase
-      .from("gifts")
-      .select("amount, created_at")
-      .eq("receiver_id", userId);
-
-    if (giftRowsError) {
-      return jsonResponse({ message: giftRowsError.message }, 500);
-    }
-
-    const callerIds = Array.from(
-      new Set(
-        (callRows ?? [])
-          .map((row) => String(row.caller_id ?? "").trim())
-          .filter((value) => value.length > 0)
-      )
-    );
-
-    let callerMap = new Map<string, string>();
-    if (callerIds.length > 0) {
-      const { data: callerRows, error: callerRowsError } = await supabase
-        .from("users")
-        .select("id, username, phone")
-        .in("id", callerIds);
-
-      if (callerRowsError) {
-        return jsonResponse({ message: callerRowsError.message }, 500);
-      }
-
-      callerMap = new Map(
-        (callerRows ?? []).map((row) => [
-          String(row.id ?? ""),
-          String(row.username ?? "").trim() ||
-            buildDisplayName(String(row.id ?? "")),
-        ])
-      );
+    if (ledgerError) {
+      return jsonResponse({ message: ledgerError.message }, 500);
     }
 
     const indiaDayStart = startOfIndiaDay();
-    const totalCallEarnings = (allCallAmounts ?? []).reduce((total, row) => {
-      const status = String(row.call_status ?? "").trim().toLowerCase();
-      if (status && status !== "completed") return total;
-      return total + asNumber(row.cost);
-    }, 0);
-    const todayCallEarnings = (allCallAmounts ?? []).reduce((total, row) => {
-      const status = String(row.call_status ?? "").trim().toLowerCase();
-      if (status && status !== "completed") return total;
+    const earningRows = (ledgerRows ?? []).filter((row) => asNumber(row.rupees_delta) > 0);
+    const totalCallEarnings = earningRows.reduce((total, row) => total + asNumber(row.rupees_delta), 0);
+    const todayCallEarnings = earningRows.reduce((total, row) => {
       return new Date(String(row.created_at ?? "")).getTime() >=
         indiaDayStart.getTime()
-        ? total + asNumber(row.cost)
-        : total;
-    }, 0);
-    const totalGiftEarnings = (giftRows ?? []).reduce(
-      (total, row) => total + asNumber(row.amount),
-      0
-    );
-    const todayGiftEarnings = (giftRows ?? []).reduce((total, row) => {
-      return new Date(String(row.created_at ?? "")).getTime() >=
-        indiaDayStart.getTime()
-        ? total + asNumber(row.amount)
+        ? total + asNumber(row.rupees_delta)
         : total;
     }, 0);
 
-    const logs = (callRows ?? []).map((row) => ({
-      name:
-        callerMap.get(String(row.caller_id ?? "")) ??
-        buildDisplayName(String(row.caller_id ?? "")),
-      isVideo:
-        String(row.call_type ?? "").trim().toLowerCase() === "video",
-      duration: formatDuration(Number(row.duration_seconds ?? 0)),
-      amount: Math.round(asNumber(row.cost)),
+    const logs = earningRows.slice(0, 20).map((row) => ({
+      name: String(row.metadata?.counterpartyName ?? row.title ?? "Caller"),
+      isVideo: String(row.kind ?? "").trim().toLowerCase() === "video_call",
+      duration: formatDuration(Number(row.metadata?.durationSeconds ?? 0)),
+      amount: Math.round(asNumber(row.rupees_delta)),
       time: formatLogTime(String(row.created_at ?? "")),
     }));
 
@@ -201,8 +138,8 @@ Deno.serve(async (req) => {
       user: buildUserSession(currentUser),
       profile: buildProfilePayload(currentUser),
       wallet: {
-        totalEarnings: Math.round(totalCallEarnings + totalGiftEarnings),
-        todayEarnings: Math.round(todayCallEarnings + todayGiftEarnings),
+        totalEarnings: Math.round(totalCallEarnings),
+        todayEarnings: Math.round(todayCallEarnings),
       },
       logs,
     });

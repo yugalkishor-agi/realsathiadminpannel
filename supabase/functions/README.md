@@ -1,6 +1,6 @@
 # Supabase Edge Functions
 
-This folder contains the Fast2SMS WhatsApp OTP Edge Functions used by the Android app in `supabase_edge` auth mode.
+This folder contains the Edge Functions used by the Android app in `supabase_edge` auth mode.
 
 ## Functions
 
@@ -12,6 +12,13 @@ This folder contains the Fast2SMS WhatsApp OTP Edge Functions used by the Androi
 - `get-host-dashboard`
 - `save-host-settings`
 - `upload-host-media`
+- `config-tags`, `config-languages`
+- `discovery-hosts`, `random-match`
+- `report-user`, `unblock-user`
+- `wallet-summary`, `record-wallet-transaction`
+- `host-kyc`
+- `delete-account`
+- `zego-token` issues short-lived ZEGOCLOUD Token04 credentials for the signed-in user.
 
 ## Required Secrets
 
@@ -43,6 +50,16 @@ supabase functions deploy support-chat --no-verify-jwt
 supabase functions deploy get-host-dashboard --no-verify-jwt
 supabase functions deploy save-host-settings --no-verify-jwt
 supabase functions deploy upload-host-media --no-verify-jwt
+supabase functions deploy config-tags --no-verify-jwt
+supabase functions deploy config-languages --no-verify-jwt
+supabase functions deploy discovery-hosts --no-verify-jwt
+supabase functions deploy random-match --no-verify-jwt
+supabase functions deploy report-user --no-verify-jwt
+supabase functions deploy unblock-user --no-verify-jwt
+supabase functions deploy wallet-summary --no-verify-jwt
+supabase functions deploy record-wallet-transaction --no-verify-jwt
+supabase functions deploy host-kyc --no-verify-jwt
+supabase functions deploy delete-account --no-verify-jwt
 ```
 
 These functions use the app's custom `X-Session-Token` flow for protected requests.
@@ -55,3 +72,9 @@ Apply the host/profile upgrade SQL before using the host dashboard flow:
 
 - `supabase/migrations/20260418_host_profile_upgrade.sql`
 - `supabase/migrations/20260420_host_story_sync.sql`
+- `supabase/migrations/20260705_public_user_id_and_nickname.sql`
+- `supabase/migrations/20260917_single_device_metadata.sql`
+- `supabase/migrations/20260918_user_side_data.sql`
+
+The client transaction endpoint accepts only call/chat debits. Recharge credits require
+server-side payment verification and must be written by a trusted webhook.

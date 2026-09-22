@@ -13,7 +13,7 @@ function hashOtp(otpCode) {
 }
 
 function buildDisplayName(phoneNumber) {
-    return "Frndzz User";
+    return "RealSaathi User";
 }
 
 function generatePublicId(seed = "") {

@@ -1,8 +1,8 @@
 {
-  "name": "frndzz-backend",
+  "name": "realsaathi-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Backend APIs for Frndzz calling app",
+  "description": "Backend APIs for RealSaathi calling app",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {

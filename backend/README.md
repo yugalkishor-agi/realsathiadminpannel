@@ -1,6 +1,6 @@
-# Frndzz Backend
+# RealSaathi Backend
 
-Backend auth module for the Frndzz calling app.
+Backend auth module for the RealSaathi calling app.
 
 ## Tech
 
@@ -9,7 +9,7 @@ Backend auth module for the Frndzz calling app.
 - Supabase PostgreSQL
 - JWT access/refresh tokens
 - OTP provider abstraction with `mock` mode enabled by default and Fast2SMS WhatsApp support
-- Groq-powered support chat for Frndzz app help
+- Groq-powered support chat for RealSaathi app help
 
 ## Folder Structure
 
@@ -111,7 +111,7 @@ Response:
 }
 ```
 
-This endpoint uses Groq chat completions and the app's current user context to answer only Frndzz support questions.
+This endpoint uses Groq chat completions and the app's current user context to answer only RealSaathi support questions.
 
 ### `POST /v1/auth/otp/verify`
 
@@ -135,7 +135,7 @@ Response:
   "user": {
     "id": "4ce8d4a8-b5b6-41b2-b1a4-4ab9af9769c0",
     "phoneNumber": "+919876543210",
-    "displayName": "frndzz_3210",
+    "displayName": "realsaathi_3210",
     "isHost": false
   }
 }

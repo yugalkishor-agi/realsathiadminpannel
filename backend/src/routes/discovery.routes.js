@@ -45,7 +45,6 @@ function mapDiscoveryHost(host) {
         id: String(host.id || ""),
         nickname: profile.nickname,
         username: profile.username,
-        publicId: profile.publicId,
         avatarUrl: host.host_profile_photo_url || host.avatar_url || null,
         hostProfilePhotoUrl: profile.hostProfilePhotoUrl,
         topicTags: normalizeList(host.topic_tags || host.interests),

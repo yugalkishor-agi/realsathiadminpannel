@@ -20,6 +20,10 @@ function validateVerifyOtpPayload(body) {
     const phoneNumber = normalizePhoneNumber(body?.phoneNumber);
     const otpCode = String(body?.otpCode || "").trim();
     const requestId = String(body?.requestId || "").trim();
+    const deviceId = String(body?.deviceId || "").trim().slice(0, 200);
+    const deviceBrand = String(body?.deviceBrand || body?.brandName || "").trim().slice(0, 120);
+    const countryCode = String(body?.countryCode || "").trim().toUpperCase().slice(0, 8);
+    const appBrand = String(body?.appBrand || "RealSaathi").trim().slice(0, 80) || "RealSaathi";
 
     if (!isValidE164(phoneNumber)) {
         throw new AppError("Enter a valid mobile number.", 422);
@@ -36,7 +40,11 @@ function validateVerifyOtpPayload(body) {
     return {
         phoneNumber,
         otpCode,
-        requestId
+        requestId,
+        deviceId,
+        deviceBrand,
+        countryCode,
+        appBrand
     };
 }
 

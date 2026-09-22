@@ -19,8 +19,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://maven.zego.im") }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
-rootProject.name = "Frndzz"
+rootProject.name = "RealSaathi"
 include(":app")

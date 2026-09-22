@@ -1,5 +1,3 @@
-const { isValidPublicId } = require("../utils/auth.util");
-
 const USER_ROLES = Object.freeze({
     USER: "user",
     HOST: "host",
@@ -40,15 +38,6 @@ function formatPhoneNumber(phoneNumber) {
     return `+${digits}`;
 }
 
-function resolvePublicId(userRecord, profileRecord = null) {
-    const storedPublicId = pickString(
-        userRecord.public_id,
-        profileRecord?.publicId
-    );
-
-    return isValidPublicId(storedPublicId) ? storedPublicId : null;
-}
-
 function mapUserSession(userRecord, profileRecord = null) {
     const phone = formatPhoneNumber(
         pickString(userRecord.phone, userRecord.phone_number, profileRecord?.phone)
@@ -65,8 +54,12 @@ function mapUserSession(userRecord, profileRecord = null) {
         id: String(userRecord.id || ""),
         phoneNumber: phone,
         displayName: displayName || null,
-        publicId: resolvePublicId(userRecord, profileRecord),
-        isHost: String(userRecord.role || "").trim().toLowerCase() === "host" || Boolean(userRecord.is_host)
+        isHost: String(userRecord.role || "").trim().toLowerCase() === "host" || Boolean(userRecord.is_host),
+        deviceId: pickString(userRecord.device_id) || null,
+        deviceBrand: pickString(userRecord.device_brand) || null,
+        countryCode: pickString(userRecord.signup_country) || null,
+        appBrand: pickString(userRecord.app_brand) || "RealSaathi",
+        sessionVersion: Number(userRecord.session_version || 0)
     };
 }
 
@@ -83,9 +76,12 @@ function mapUserProfile(userRecord, profileRecord = null, hostStories = []) {
         Boolean(userRecord.is_host);
 
     return {
-        nickname: nickname || "Frndzz User",
-        username: nickname || "Frndzz User",
-        publicId: resolvePublicId(userRecord, profileRecord),
+        nickname: nickname || "RealSaathi User",
+        username: nickname || "RealSaathi User",
+        deviceId: pickString(userRecord.device_id) || null,
+        deviceBrand: pickString(userRecord.device_brand) || null,
+        countryCode: pickString(userRecord.signup_country) || null,
+        appBrand: pickString(userRecord.app_brand) || "RealSaathi",
         gender: pickString(userRecord.gender, profileRecord?.gender) || null,
         preferredLanguage: pickString(userRecord.language, profileRecord?.preferred_language) || "All",
         nativeLanguages: Array.isArray(userRecord.native_languages)

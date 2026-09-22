@@ -32,11 +32,11 @@ module.exports = {
     jwt: {
         accessSecret: getEnv(
             "JWT_ACCESS_SECRET",
-            isProduction ? undefined : "frndzz-dev-access-secret"
+            isProduction ? undefined : "realsaathi-dev-access-secret"
         ),
         refreshSecret: getEnv(
             "JWT_REFRESH_SECRET",
-            isProduction ? undefined : "frndzz-dev-refresh-secret"
+            isProduction ? undefined : "realsaathi-dev-refresh-secret"
         ),
         accessExpiresIn: getEnv("JWT_ACCESS_EXPIRES_IN", "15m"),
         refreshExpiresIn: getEnv("JWT_REFRESH_EXPIRES_IN", "30d")

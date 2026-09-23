@@ -156,12 +156,12 @@ class ZegoCallManager(
         config.useSpeakerWhenJoining = isVideo
         config.topMenuBarConfig.isVisible = false
         config.topMenuBarConfig.buttons = emptyList()
-        config.durationConfig = ZegoCallDurationConfig().apply {
-            isVisible = true
-            durationUpdateListener = DurationUpdateListener { seconds ->
+        val durationConfig = ZegoCallDurationConfig()
+        durationConfig.isVisible = true
+        durationConfig.durationUpdateListener = DurationUpdateListener { seconds ->
             latestCallDurationSeconds = seconds.coerceAtLeast(0L)
-            }
         }
+        config.durationConfig = durationConfig
         config.leaveCallListener = ZegoUIKitPrebuiltCallFragment.LeaveCallListener {
             finishTrackedCall()
         }
@@ -185,6 +185,11 @@ class ZegoCallManager(
         config.bottomMenuBarConfig.hideAutomatically = false
         config.bottomMenuBarConfig.hideByClick = false
         return config
+    }
+
+    fun endCall() {
+        runCatching { ZegoUIKitPrebuiltCallService.endCall() }
+        finishTrackedCall()
     }
 
     private fun invitationListener() = object : ZegoInvitationCallListener {

@@ -38,12 +38,20 @@ data class Avatar(
 )
 
 data class CallHistory(
+    val callId: String,
     val userId: String,
     val name: String,
     val startedAtMillis: Long,
     val durationSeconds: Long,
-    val isVideo: Boolean
+    val isVideo: Boolean,
+    val status: CallHistoryStatus
 )
+
+enum class CallHistoryStatus {
+    ANSWERED,
+    MISSED,
+    CANCELLED
+}
 
 data class CoinPack(
     val coins: Int,

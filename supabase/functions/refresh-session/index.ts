@@ -32,6 +32,9 @@ Deno.serve(async (req) => {
     if (currentUserError || !currentUser) {
       return jsonResponse({ message: "User account not found." }, 404);
     }
+    if (["blocked", "banned", "suspended"].includes(String(currentUser.account_status ?? "active").trim().toLowerCase())) {
+      return jsonResponse({ message: "This account is not allowed to access the app." }, 403);
+    }
 
     const userSession = buildUserSession(currentUser);
     if (Number(refreshSession.raw?.sessionVersion ?? 0) !== Number(userSession.sessionVersion ?? 0)) {

@@ -24,15 +24,22 @@ Deno.serve(async (req) => {
     }
 
     const db = createAdminClient();
+    const participantIds = [userId];
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(counterpartyId)) {
+      participantIds.push(counterpartyId);
+    }
     const { data: users, error: usersError } = await db.from("users")
       .select("id,username,role,host_audio_rate,host_video_rate")
-      .in("id", [userId, counterpartyId]);
+      .in("id", participantIds);
     if (usersError) throw usersError;
     const current = (users ?? []).find((row) => String(row.id) === userId);
-    const other = (users ?? []).find((row) => String(row.id) === counterpartyId) ??
-      (await db.from("users").select("id,username,role,host_audio_rate,host_video_rate").then((result) =>
-        (result.data ?? []).find((row) => zegoId(String(row.id)) === counterpartyId)
-      ));
+    let other = (users ?? []).find((row) => String(row.id) === counterpartyId);
+    if (!other) {
+      const { data: candidates, error: candidatesError } = await db.from("users")
+        .select("id,username,role,host_audio_rate,host_video_rate");
+      if (candidatesError) throw candidatesError;
+      other = (candidates ?? []).find((row) => zegoId(String(row.id)) === counterpartyId);
+    }
     if (!current || !other) return jsonResponse({ message: "Call participants not found." }, 404);
 
     const host = String(current.role ?? "") === "host" ? current : other;

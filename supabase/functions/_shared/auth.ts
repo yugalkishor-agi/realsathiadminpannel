@@ -408,10 +408,14 @@ export async function authenticateRequest(req: Request) {
   const supabase = createAdminClient();
   const { data: currentUser, error } = await supabase
     .from("users")
-    .select("session_version")
+    .select("session_version, account_status")
     .eq("id", userId)
     .maybeSingle();
   if (error || !currentUser) throw new Error("Unable to validate session.");
+  const accountStatus = String(currentUser.account_status ?? "active").trim().toLowerCase();
+  if (["blocked", "banned", "suspended"].includes(accountStatus)) {
+    throw new Error("This account is not allowed to access the app.");
+  }
   if (Number(payload?.sessionVersion ?? 0) !== Number(currentUser.session_version ?? 0)) {
     throw new Error("Access token session replaced by a login on another device.");
   }

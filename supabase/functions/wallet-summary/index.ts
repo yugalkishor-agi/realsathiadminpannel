@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
     }));
     const transactions = (data ?? []).map((row) => ({
       id: row.id,
+      callId: row.metadata?.callId ?? null,
       kind: row.kind,
       title: row.title,
       detail: row.detail,
@@ -29,6 +30,7 @@ Deno.serve(async (req) => {
       rupeesDelta: row.rupees_delta,
       rechargeAmountRupees: row.recharge_amount_rupees,
       status: row.status,
+      counterpartyId: row.metadata?.counterpartyId ?? null,
       counterpartyName: row.metadata?.counterpartyName ?? null,
       callStatus: row.metadata?.callStatus ?? null,
       durationSeconds: row.metadata?.durationSeconds ?? null,

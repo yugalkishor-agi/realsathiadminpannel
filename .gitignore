@@ -15,3 +15,4 @@
 local.properties
 backend/node_modules/
 backend/.env
+adminpannel/.env

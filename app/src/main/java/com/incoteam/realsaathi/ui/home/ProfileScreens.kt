@@ -247,8 +247,7 @@ fun ProfileScreen(
                     }
                 },
                 onTransactions = {
-                    screen = ProfileRoute.Transactions
-                    onInnerNavigate()
+                    onOpenTransactions()
                 },
                 onSettings = {
                     screen = ProfileRoute.Settings

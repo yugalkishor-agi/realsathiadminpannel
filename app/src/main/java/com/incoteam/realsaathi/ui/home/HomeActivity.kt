@@ -16,6 +16,7 @@ import android.media.AudioManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.os.PowerManager
 import android.view.WindowManager
 import android.widget.Toast
@@ -180,7 +181,9 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                         durationSeconds = event.durationSeconds,
                         ratePerMinute = event.ratePerMinute
                     )
-                )
+                ).onFailure { error ->
+                    Log.e("RealSaathiCall", "Unable to save call event", error)
+                }
             }
         }
         lifecycleScope.launch {
@@ -331,7 +334,10 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                             callEvent = latestCallEvent,
                             startInProfileSetup = shouldForceProfileSetup,
                             onStartCall = ::startZegoCall,
-                            onEndCall = { updateActiveCallSession(null) },
+                            onEndCall = {
+                                zegoCallManager.endCall()
+                                updateActiveCallSession(null)
+                            },
                             onExitApp = ::showExitConfirmation,
                             onSwitchToHostMode = { recreate() },
                             onProfileSetupCompleted = {

@@ -29,6 +29,7 @@ data class RechargeOrderResponse(
 
 data class RemoteWalletTransaction(
     val id: String? = null,
+    val callId: String? = null,
     val kind: String = "adjustment",
     val title: String = "Wallet update",
     val detail: String = "",
@@ -37,6 +38,7 @@ data class RemoteWalletTransaction(
     val rupeesDelta: Int = 0,
     val rechargeAmountRupees: Int = 0,
     val status: String = "completed",
+    val counterpartyId: String? = null,
     val counterpartyName: String? = null,
     val callStatus: String? = null,
     val durationSeconds: Long? = null,

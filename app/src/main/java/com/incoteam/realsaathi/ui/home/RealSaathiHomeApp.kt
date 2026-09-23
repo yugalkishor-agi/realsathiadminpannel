@@ -644,6 +644,64 @@ private fun formatCallDuration(durationSeconds: Long): String {
     }
 }
 
+private fun CallLifecycleEvent.toCallHistory(): CallHistory? {
+    val historyStatus = when (status.lowercase(Locale.US)) {
+        "completed" -> CallHistoryStatus.ANSWERED
+        "missed" -> CallHistoryStatus.MISSED
+        "canceled", "cancelled", "declined" -> CallHistoryStatus.CANCELLED
+        else -> return null
+    }
+    return CallHistory(
+        callId = callId,
+        userId = counterpartyId,
+        name = counterpartyName.ifBlank { "RealSaathi User" },
+        startedAtMillis = System.currentTimeMillis(),
+        durationSeconds = durationSeconds,
+        isVideo = isVideo,
+        status = historyStatus
+    )
+}
+
+private fun RemoteWalletTransaction.toCallHistory(): CallHistory? {
+    val normalizedKind = kind.trim().lowercase(Locale.US)
+    if (normalizedKind != "audio_call" && normalizedKind != "video_call") return null
+    val historyStatus = when (callStatus?.trim()?.lowercase(Locale.US)) {
+        "completed" -> CallHistoryStatus.ANSWERED
+        "missed" -> CallHistoryStatus.MISSED
+        "canceled", "cancelled", "declined" -> CallHistoryStatus.CANCELLED
+        else -> return null
+    }
+    return CallHistory(
+        callId = callId.orEmpty(),
+        userId = counterpartyId.orEmpty(),
+        name = counterpartyName?.ifBlank { null } ?: title.ifBlank { "RealSaathi User" },
+        startedAtMillis = createdAt.toWalletTimestampMillis(),
+        durationSeconds = durationSeconds ?: 0L,
+        isVideo = normalizedKind == "video_call",
+        status = historyStatus
+    )
+}
+
+private fun addOrUpdateCallHistory(
+    historyList: SnapshotStateList<CallHistory>,
+    item: CallHistory
+) {
+    val existingIndex = historyList.indexOfFirst { existing ->
+        val sameCallId = item.callId.isNotBlank() && existing.callId == item.callId
+        val sameRecentCall = existing.userId == item.userId &&
+            existing.isVideo == item.isVideo &&
+            kotlin.math.abs(existing.startedAtMillis - item.startedAtMillis) <= 60_000L
+        sameCallId || sameRecentCall
+    }
+    if (existingIndex >= 0) {
+        historyList[existingIndex] = item.copy(
+            startedAtMillis = historyList[existingIndex].startedAtMillis
+        )
+    } else {
+        historyList.add(0, item)
+    }
+}
+
 private fun isSameDay(firstMillis: Long, secondMillis: Long): Boolean {
     val first = Calendar.getInstance().apply { timeInMillis = firstMillis }
     val second = Calendar.getInstance().apply { timeInMillis = secondMillis }
@@ -812,16 +870,7 @@ private fun MainScaffold(
         val event = callEvent ?: return@LaunchedEffect
         val isCustomerCall = !sessionManager.isHost()
         if (!isCustomerCall) return@LaunchedEffect
-        callHistoryList.add(
-            0,
-            CallHistory(
-                userId = event.counterpartyId,
-                name = event.counterpartyName,
-                startedAtMillis = System.currentTimeMillis(),
-                durationSeconds = event.durationSeconds,
-                isVideo = event.isVideo
-            )
-        )
+        event.toCallHistory()?.let { addOrUpdateCallHistory(callHistoryList, it) }
     }
     val chatThreads = remember {
         mutableStateListOf<ChatThread>().apply {
@@ -927,6 +976,8 @@ private fun MainScaffold(
                 val remoteTransactions = summary.transactions.map { it.toWalletTransactionEntry() }
                 walletTransactions.clear()
                 walletTransactions.addAll(remoteTransactions)
+                summary.transactions.mapNotNull { it.toCallHistory() }
+                    .forEach { addOrUpdateCallHistory(callHistoryList, it) }
                 val index = chatThreads.indexOfFirst { it.id == RechargeAssistantId }
                 if (index >= 0) {
                     chatThreads[index] = mergeRechargeReceipts(
@@ -1147,13 +1198,15 @@ private fun MainScaffold(
                             )
                             recordCompletedCallTransaction(activeCall, durationSeconds, callCoins)
                             val finishedCall = CallHistory(
+                                callId = "",
                                 userId = activeCall.userId,
                                 name = activeCall.displayLabel(),
                                 startedAtMillis = activeCall.startedAtMillis,
                                 durationSeconds = durationSeconds,
-                                isVideo = activeCall.isVideo
+                                isVideo = activeCall.isVideo,
+                                status = CallHistoryStatus.ANSWERED
                             )
-                            callHistoryList.add(0, finishedCall)
+                            addOrUpdateCallHistory(callHistoryList, finishedCall)
                             syncUnlockedChatThreads(chatThreads, callHistoryList, blockedThreadIds.toSet())
                             val chatUnlocked = durationSeconds >= ChatUnlockMinDurationSeconds
                         if (chatUnlocked) {
@@ -7592,7 +7645,7 @@ private fun SwipeCallHistoryItem(item: CallHistory, onAudioCall: () -> Unit, onV
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "${formatClockTime(item.startedAtMillis)} • ${formatCallDuration(item.durationSeconds)}",
+                    callHistoryDetailLabel(item),
                     color = TextSubtle,
                     fontSize = 12.sp
                 )
@@ -7610,6 +7663,15 @@ private fun SwipeCallHistoryItem(item: CallHistory, onAudioCall: () -> Unit, onV
             }
         }
     }
+}
+
+private fun callHistoryDetailLabel(item: CallHistory): String {
+    val statusLabel = when (item.status) {
+        CallHistoryStatus.ANSWERED -> "Answered • ${formatCallDuration(item.durationSeconds)}"
+        CallHistoryStatus.MISSED -> "Missed call"
+        CallHistoryStatus.CANCELLED -> "Cancelled call"
+    }
+    return "${formatClockTime(item.startedAtMillis)} • $statusLabel"
 }
 
 @Composable

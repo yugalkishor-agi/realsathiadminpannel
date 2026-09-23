@@ -59,6 +59,10 @@ function buildNewUser(phoneNumber: string) {
 function buildMissingUserDefaults(userRow: Record<string, unknown>, phoneNumber: string) {
   const updates: Record<string, unknown> = {};
 
+  if (["blocked", "banned", "suspended"].includes(String(userRow.account_status ?? "active").trim().toLowerCase())) {
+    return jsonResponse({ message: "This account is not allowed to access the app." }, 403);
+  }
+
   if (!String(userRow.username ?? "").trim()) {
     updates.username = buildDisplayName(phoneNumber);
   }

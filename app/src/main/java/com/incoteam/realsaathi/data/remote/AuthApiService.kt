@@ -28,6 +28,7 @@ import com.incoteam.realsaathi.data.model.auth.UserProfileResponse
 import com.incoteam.realsaathi.data.model.auth.VerifyOtpRequest
 import com.incoteam.realsaathi.data.model.auth.VerifyOtpResponse
 import com.incoteam.realsaathi.data.model.auth.WalletSummaryResponse
+import com.incoteam.realsaathi.data.model.auth.AppBannersResponse
 import com.incoteam.realsaathi.data.model.auth.RechargeOrderRequest
 import com.incoteam.realsaathi.data.model.auth.RechargeOrderResponse
 import com.incoteam.realsaathi.data.model.auth.ZegoTokenResponse
@@ -44,6 +45,9 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 interface AuthApiService {
+
+    @GET
+    suspend fun getAppBanners(@Url url: String): Response<AppBannersResponse>
 
     @POST
     suspend fun sendOtp(

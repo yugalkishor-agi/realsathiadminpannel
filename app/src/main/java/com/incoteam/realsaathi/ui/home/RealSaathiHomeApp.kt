@@ -188,6 +188,7 @@ import com.incoteam.realsaathi.data.model.auth.SupportChatMessage
 import com.incoteam.realsaathi.data.model.auth.SupportChatRequest
 import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
 import com.incoteam.realsaathi.data.repository.AuthRepository
+import com.incoteam.realsaathi.data.repository.CachedAppBanner
 import java.io.File
 import java.security.MessageDigest
 import java.net.URL
@@ -864,6 +865,14 @@ private fun MainScaffold(
     var hideBottomBar by rememberSaveable { mutableStateOf(startInProfileSetup) }
     val walletTransactions = remember { mutableStateListOf<WalletTransactionEntry>() }
     var isRechargeCreating by remember { mutableStateOf(false) }
+    var cachedBanners by remember { mutableStateOf(emptyList<CachedAppBanner>()) }
+    LaunchedEffect(Unit) {
+        cachedBanners = app.appBannerRepository.cached()
+        while (isActive) {
+            cachedBanners = withContext(Dispatchers.IO) { app.appBannerRepository.refresh() }
+            delay(5 * 60 * 1000L)
+        }
+    }
     val blockedThreadIds = remember { mutableStateListOf<String>() }
     val callHistoryList = remember { mutableStateListOf<CallHistory>() }
     LaunchedEffect(callEvent?.callId, callEvent?.status, callEvent?.durationSeconds) {
@@ -1075,6 +1084,7 @@ private fun MainScaffold(
             when (tab) {
                 0 -> HomeScreen(
                     users = homeUsers.filter { it.id !in blockedThreadIds },
+                    banners = cachedBanners.filter { it.placement == "home" },
                     isRefreshing = isHomeRefreshing,
                     onWalletClick = {
                         walletStartScreen = "wallet"
@@ -1160,6 +1170,7 @@ private fun MainScaffold(
                 Surface(color = AppBg, modifier = Modifier.fillMaxSize()) {
                     WalletScreen(
                         walletTransactions = walletTransactions,
+                        banners = cachedBanners.filter { it.placement == "wallet" },
                         initialScreen = walletStartScreen,
                         onRechargePack = { pack ->
                             if (!isRechargeCreating) {
@@ -2704,6 +2715,7 @@ private fun RowScope.CustomBottomItem(
 @Composable
 private fun HomeScreen(
     users: List<User>,
+    banners: List<CachedAppBanner>,
     isRefreshing: Boolean,
     onWalletClick: () -> Unit,
     onRefreshHosts: () -> Unit,
@@ -2801,7 +2813,7 @@ private fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        RealSaathiSlider(animateSlides = !listState.isScrollInProgress)
+                        RealSaathiSlider(animateSlides = !listState.isScrollInProgress, banners = banners)
                     }
                     if (groupedUsers.isEmpty()) {
                         item {
@@ -2850,29 +2862,32 @@ private fun HomeScreen(
 }
 
 @Composable
-private fun RealSaathiSlider(animateSlides: Boolean) {
-    val slides = remember {
+private fun RealSaathiSlider(animateSlides: Boolean, banners: List<CachedAppBanner>) {
+    val slides = remember(banners) {
         listOf(
             HomePromoSlide(
                 tag = "REAL CONNECTIONS",
                 title = "Conversations that feel real",
                 subtitle = "Choose a host and start a comfortable one-to-one conversation.",
                 accentStart = Accent1,
-                accentEnd = Accent2
+                accentEnd = Accent2,
+                imagePath = banners.firstOrNull { it.slot == 1 }?.localPath
             ),
             HomePromoSlide(
                 tag = "AUDIO & VIDEO",
                 title = "Call your way",
                 subtitle = "Move between audio and video with clear, simple controls.",
                 accentStart = Accent2,
-                accentEnd = Color(0xFF7037D8)
+                accentEnd = Color(0xFF7037D8),
+                imagePath = banners.firstOrNull { it.slot == 2 }?.localPath
             ),
             HomePromoSlide(
                 tag = "REALSAATHI",
                 title = "Safe, simple connections",
                 subtitle = "Chat, call and manage your wallet from one trusted place.",
                 accentStart = Color(0xFF7037D8),
-                accentEnd = Accent1
+                accentEnd = Accent1,
+                imagePath = banners.firstOrNull { it.slot == 3 }?.localPath
             )
         )
     }
@@ -2925,17 +2940,12 @@ private fun RealSaathiSlider(animateSlides: Boolean) {
                             )
                         )
                 )
-                Image(
-                    painter = painterResource(id = R.drawable.realsaathi_logo_art),
-                    contentDescription = "RealSaathi logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 15.dp)
-                        .size(94.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, Color.White.copy(alpha = 0.38f), CircleShape)
-                )
+                    if (slide.imagePath != null) LocalBannerImage(slide.imagePath, "Home banner", Modifier.align(Alignment.CenterEnd).padding(end = 15.dp).size(94.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.38f), CircleShape)) else Image(
+                        painter = painterResource(id = R.drawable.realsaathi_logo_art),
+                        contentDescription = "RealSaathi logo",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 15.dp).size(94.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.38f), CircleShape)
+                    )
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -2977,6 +2987,7 @@ private fun RealSaathiSlider(animateSlides: Boolean) {
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+                slide.imagePath?.let { LocalBannerImage(it, "Home banner", Modifier.fillMaxSize()) }
             }
         }
         Row(
@@ -4239,12 +4250,19 @@ private data class HostStoryMoment(
     val mediaType: HostStoryMediaType? = null
 )
 
+@Composable
+private fun LocalBannerImage(path: String, description: String, modifier: Modifier) {
+    val bitmap = remember(path) { BitmapFactory.decodeFile(path)?.asImageBitmap() }
+    bitmap?.let { Image(bitmap = it, contentDescription = description, contentScale = ContentScale.Crop, modifier = modifier) }
+}
+
 private data class HomePromoSlide(
     val tag: String,
     val title: String,
     val subtitle: String,
     val accentStart: Color,
-    val accentEnd: Color
+    val accentEnd: Color,
+    val imagePath: String? = null
 )
 
 private data class WalletOfferSlide(
@@ -4252,7 +4270,8 @@ private data class WalletOfferSlide(
     val title: String,
     val subtitle: String,
     val accentStart: Color,
-    val accentEnd: Color
+    val accentEnd: Color,
+    val imagePath: String? = null
 )
 
 private enum class WalletTransactionKind {
@@ -4401,6 +4420,7 @@ private fun String?.toWalletTimestampMillis(): Long {
 private fun WalletScreen(
     onBack: () -> Unit,
     walletTransactions: SnapshotStateList<WalletTransactionEntry>,
+    banners: List<CachedAppBanner>,
     onRechargePack: (CoinPack) -> Unit,
     initialScreen: String = "wallet"
 ) {
@@ -4445,7 +4465,7 @@ private fun WalletScreen(
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
                 ) {
-                    WalletOfferSlider(animateSlides = !listState.isScrollInProgress)
+                    WalletOfferSlider(animateSlides = !listState.isScrollInProgress, banners = banners)
                     Spacer(Modifier.height(16.dp))
                     WalletBalanceHero(
                         currentCoins = coinsState.value,
@@ -4494,29 +4514,32 @@ private fun WalletScreen(
 }
 
 @Composable
-private fun WalletOfferSlider(animateSlides: Boolean) {
-    val slides = remember {
+private fun WalletOfferSlider(animateSlides: Boolean, banners: List<CachedAppBanner>) {
+    val slides = remember(banners) {
         listOf(
             WalletOfferSlide(
                 tag = "QUICK RECHARGE",
                 title = "Recharge and stay connected",
                 subtitle = "Add coins for calls and chats whenever you need them.",
                 accentStart = Accent1.copy(alpha = 0.92f),
-                accentEnd = Accent2.copy(alpha = 0.90f)
+                accentEnd = Accent2.copy(alpha = 0.90f),
+                imagePath = banners.firstOrNull { it.slot == 1 }?.localPath
             ),
             WalletOfferSlide(
                 tag = "COIN BALANCE",
                 title = "Your wallet, at a glance",
                 subtitle = "See your available coins and recent activity in one place.",
                 accentStart = Accent2.copy(alpha = 0.88f),
-                accentEnd = Accent3.copy(alpha = 0.86f)
+                accentEnd = Accent3.copy(alpha = 0.86f),
+                imagePath = banners.firstOrNull { it.slot == 2 }?.localPath
             ),
             WalletOfferSlide(
                 tag = "PAYMENT STATUS",
                 title = "Track every recharge",
                 subtitle = "Check pending, successful or failed payments in transactions.",
                 accentStart = Accent3.copy(alpha = 0.88f),
-                accentEnd = Accent1.copy(alpha = 0.84f)
+                accentEnd = Accent1.copy(alpha = 0.84f),
+                imagePath = banners.firstOrNull { it.slot == 3 }?.localPath
             )
         )
     }
@@ -4639,16 +4662,14 @@ private fun WalletOfferSlider(animateSlides: Boolean) {
                         .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
+                    if (slide.imagePath != null) LocalBannerImage(slide.imagePath, "Wallet banner", Modifier.fillMaxSize().padding(4.dp).clip(CircleShape)) else Image(
                         painter = painterResource(id = R.drawable.realsaathi_logo_art),
                         contentDescription = "RealSaathi logo",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(4.dp)
-                            .clip(CircleShape)
+                        modifier = Modifier.fillMaxSize().padding(4.dp).clip(CircleShape)
                     )
                 }
+                slide.imagePath?.let { LocalBannerImage(it, "Wallet banner", Modifier.fillMaxSize()) }
             }
         }
         Row(

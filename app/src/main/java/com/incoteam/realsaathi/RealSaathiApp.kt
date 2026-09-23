@@ -5,6 +5,7 @@ import com.incoteam.realsaathi.core.network.ApiClient
 import com.incoteam.realsaathi.core.calling.ZegoCallManager
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.repository.AuthRepository
+import com.incoteam.realsaathi.data.repository.AppBannerRepository
 import com.incoteam.realsaathi.ui.notifications.NetworkReminderMonitor
 
 class RealSaathiApp : Application() {
@@ -21,6 +22,7 @@ class RealSaathiApp : Application() {
     val authRepository: AuthRepository by lazy {
         AuthRepository(ApiClient.authApiService, sessionManager, this)
     }
+    val appBannerRepository: AppBannerRepository by lazy { AppBannerRepository(this) }
 
     val zegoCallManager: ZegoCallManager by lazy {
         ZegoCallManager(this, authRepository, sessionManager)

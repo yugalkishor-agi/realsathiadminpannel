@@ -1,0 +1,2 @@
+[functions.config-banners]
+verify_jwt = false

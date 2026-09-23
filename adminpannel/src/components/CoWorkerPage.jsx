@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import StatusBadge from './StatusBadge'
 
-const scopes = ['users', 'wallet', 'moderation', 'kyc']
+const scopes = ['users', 'wallet', 'moderation', 'kyc', 'banners']
 export default function CoWorkerPage() {
   const [members, setMembers] = useState([]); const [email, setEmail] = useState(''); const [userId, setUserId] = useState(''); const [permissions, setPermissions] = useState(['users']); const [editing, setEditing] = useState(null); const [error, setError] = useState('')
   const load = async () => { const result = await supabase.from('admin_members').select('id,email,user_id,permissions,status,created_at').order('created_at', { ascending: false }); if (result.error) setError(result.error.message); else setMembers(result.data || []) }

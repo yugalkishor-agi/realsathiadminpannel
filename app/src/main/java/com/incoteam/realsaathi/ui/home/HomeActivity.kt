@@ -34,6 +34,7 @@ import com.incoteam.realsaathi.core.network.isInternetAvailable
 import com.incoteam.realsaathi.core.network.registerInternetAvailabilityCallback
 import com.incoteam.realsaathi.core.network.unregisterInternetAvailabilityCallback
 import com.incoteam.realsaathi.core.session.SessionManager
+import com.incoteam.realsaathi.data.model.auth.CallEventRequest
 import com.incoteam.realsaathi.core.ui.StableMobileUi
 import com.incoteam.realsaathi.core.ui.withStableFontScale
 import com.incoteam.realsaathi.ui.auth.login.LoginActivity
@@ -130,6 +131,7 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
         handleMandatoryPermissionResult()
     }
     private var activeCallSession by mutableStateOf<ActiveCallSession?>(null)
+    private var latestCallEvent by mutableStateOf<com.incoteam.realsaathi.core.calling.CallLifecycleEvent?>(null)
     private var callMicMuted by mutableStateOf(false)
     private var manualCallAudioRoute by mutableStateOf(CallAudioRoute.SPEAKER)
     private var selectedCallAudioRoute by mutableStateOf(CallAudioRoute.SPEAKER)
@@ -163,6 +165,23 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
             updateActiveCallSession(null)
             navigateToLogin()
             return
+        }
+        zegoCallManager.setCallEventListener { event ->
+            latestCallEvent = event
+            lifecycleScope.launch {
+                (application as RealSaathiApp).authRepository.recordCallEvent(
+                    accessToken = sessionManager.getAccessToken(),
+                    request = CallEventRequest(
+                        callId = event.callId,
+                        counterpartyId = event.counterpartyId,
+                        counterpartyName = event.counterpartyName,
+                        kind = if (event.isVideo) "video_call" else "audio_call",
+                        status = event.status,
+                        durationSeconds = event.durationSeconds,
+                        ratePerMinute = event.ratePerMinute
+                    )
+                )
+            }
         }
         lifecycleScope.launch {
             zegoCallManager.initialize()
@@ -309,6 +328,7 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                         RealSaathiHomeApp(
                             sessionManager = sessionManager,
                             activeCall = activeCallSession,
+                            callEvent = latestCallEvent,
                             startInProfileSetup = shouldForceProfileSetup,
                             onStartCall = ::startZegoCall,
                             onEndCall = { updateActiveCallSession(null) },

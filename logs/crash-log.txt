@@ -1,0 +1,599 @@
+--------- beginning of main
+09-23 14:36:59.647  4309  4555 E Flipper : Attempted to initialize in non-internal build
+09-23 14:37:00.021  1446  1501 D EmuHWC2 : sent 6 syncs in 60s
+09-23 14:37:00.286  3577  3599 I oid.ld.appstor: Waiting for a blocking GC ProfileSaver
+09-23 14:37:00.286  3577  3599 I oid.ld.appstor: WaitForGcToComplete blocked ProfileSaver on HeapTrim for 11.469ms
+09-23 14:37:00.461  1597  1597 I system_server: type=1400 audit(0.0:1379): avc: denied { ioctl } for path="/dev/fastpipe" dev="tmpfs" ino=3145 ioctlcmd=6865 scontext=u:r:system_server:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+--------- beginning of system
+09-23 14:37:00.678  1597  3510 I ActivityManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.incoteam.realsaathi/.MainActivity bnds=[24,133][200,267] (has extras)} from uid 10040
+09-23 14:37:00.767  1435  3785 D audio_hw_hal: raw_start_output_stream, stream=0xf5e1b000, sampleRate=48000, channel=2, bps=16, bufSize=4096
+09-23 14:37:00.764  1435  1435 I writer  : type=1400 audit(0.0:1380): avc: denied { ioctl } for path="/dev/fastpipe" dev="tmpfs" ino=3145 ioctlcmd=6869 scontext=u:r:hal_audio_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:00.813  1597  1612 W SchedPolicy: add_tid_to_cgroup failed to write '2385' (No space left on device); fd=24
+09-23 14:37:00.824  1597  1612 W BroadcastQueue: Permission Denial: receiving Intent { act=com.android.launcher3.action.LAUNCH flg=0x10 (has extras) } to ProcessRecord{c51e9f9 2067:com.google.android.gms.persistent/u0a16} (pid=2067, uid=10016) requires com.android.launcher3.permission.RECEIVE_LAUNCH_BROADCASTS due to sender com.ldmnq.launcher3 (uid 10040)
+09-23 14:37:00.827  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:45 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:00.829  1597  3510 W BroadcastQueue: Permission Denial: receiving Intent { act=com.android.launcher3.action.LAUNCH flg=0x10 (has extras) } to com.google.android.gms/.chimera.GmsIntentOperationService$GmsExternalReceiver requires com.android.launcher3.permission.RECEIVE_LAUNCH_BROADCASTS due to sender com.ldmnq.launcher3 (uid 10040)
+09-23 14:37:00.830  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_FOREGROUND -p com.android.ld.appstore -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:00.830  1455  1455 D ldinit  : result:
+09-23 14:37:00.828  5762  5762 I sh      : type=1400 audit(0.0:1381): avc: denied { execute_no_trans } for path="/system/bin/am" dev="sda2" ino=1695 scontext=u:r:ldinit:s0 tcontext=u:object_r:system_file:s0 tclass=file permissive=1
+09-23 14:37:00.831  1436  1436 I bluetooth@1.0-s: type=1400 audit(0.0:1382): avc: denied { call } for scontext=u:r:init:s0 tcontext=u:r:bluetooth:s0 tclass=binder permissive=1
+09-23 14:37:00.871  2385  2385 I ScionFrontendAp: type=1400 audit(0.0:1383): avc: denied { open } for path="/data/local/cfg-ndnze/android7" dev="sdb2" ino=393969 scontext=u:r:untrusted_app:s0:c40,c256,c512,c768 tcontext=u:object_r:system_data_file:s0 tclass=file permissive=1
+09-23 14:37:00.898  1597  1679 D WindowManager: updateRotationUnchecked! mLastOrientation=1 old-mRotation=0 old-mAltOrientation=false new-mRotation=3 new-mAltOrientation=false
+09-23 14:37:00.900  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_FOREGROUND flg=0x400020 pkg=com.android.ld.appstore (has extras) }
+09-23 14:37:00.908  1429  1429 D libnativeloader: CrashArm64 config not exist or not readable: /system/vendor/firmware_mnt/ndnze/CrashArm64
+09-23 14:37:00.908  1429  1429 I Zygote  : IsCopy  libcrashcatcher: 0
+09-23 14:37:00.926  1597  1679 I ActivityManager: Config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w480dp h829dp 240dpi lrg long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=Rect(0, 0 - 720, 1280) mWindowingMode=fullscreen mActivityType=undefined} s.22}
+09-23 14:37:00.926  3577  4827 I AppStartReceiver: onReceive, action = com.ldmnq.APP_FOREGROUND, extras = Bundle[{package=com.incoteam.realsaathi, pos=pc}]
+09-23 14:37:00.930  1597  1679 I ActivityManager: Override config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w480dp h829dp 240dpi lrg long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 720, 1280) mAppBounds=Rect(0, 0 - 720, 1280) mWindowingMode=fullscreen mActivityType=undefined} s.22} for displayId=0
+09-23 14:37:00.932  1597  1614 W ActivityManager: Slow operation: 57ms so far, now at startProcess: returned from zygote!
+09-23 14:37:00.935  1597  1614 W ActivityManager: Slow operation: 59ms so far, now at startProcess: done updating battery stats
+09-23 14:37:00.935  1597  1614 W ActivityManager: Slow operation: 59ms so far, now at startProcess: building log message
+09-23 14:37:00.935  1597  1614 I ActivityManager: Start proc 5767:com.incoteam.realsaathi/u0a80 for activity com.incoteam.realsaathi/.MainActivity
+09-23 14:37:00.935  1597  1614 W ActivityManager: Slow operation: 59ms so far, now at startProcess: starting to update pids map
+09-23 14:37:00.935  1597  1614 W ActivityManager: Slow operation: 59ms so far, now at startProcess: done updating pids map
+09-23 14:37:00.947  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:00.947  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:00.947  1597  1685 I InputReader: Device reconfigured: id=3, name='input', size 1280x720, orientation 3, mode 1, display id 0
+09-23 14:37:00.956  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:00.956  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:00.981  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:00.983  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_FOREGROUND -p com.ldmnq.launcher3 -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:00.983  1455  1455 D ldinit  : result:
+09-23 14:37:00.984  1597  3510 W SchedPolicy: add_tid_to_cgroup failed to write '2211' (No space left on device); fd=24
+09-23 14:37:00.994  5767  5767 W nativebridge: Failed to bind-mount /data/local/cfg-ndnze/ as /proc/cpuinfo: Not a directory
+09-23 14:37:00.995  5767  5767 I Zygote  : seccomp disabled by setenforce 0
+09-23 14:37:01.000  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_FOREGROUND flg=0x400020 pkg=com.ldmnq.launcher3 (has extras) }
+09-23 14:37:01.005  1758  1758 D StatusBar: disable<e i a s b h r c s > disable2<q i n >
+09-23 14:37:01.006  5767  5767 I team.realsaath: Late-enabling -Xcheck:jni
+09-23 14:37:01.063  3577  3577 D AndroidAutoSize: initScaledDensity = 1.5 on ConfigurationChanged
+09-23 14:37:01.074  5767  5767 D nativebridge: call UnloadNativeBridge! state=1
+09-23 14:37:01.076  2385  2470 D AppStartReceiver: action = com.ldmnq.APP_FOREGROUND, packageName = com.incoteam.realsaathi, pos = pc
+09-23 14:37:01.086  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:01.089  2211  2211 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.measurement.START pkg=com.google.android.gms }
+09-23 14:37:01.089  2211  2211 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.measurement.START pkg=com.google.android.gms }
+09-23 14:37:01.183  1597  3446 W SchedPolicy: add_tid_to_cgroup failed to write '5767' (No space left on device); fd=27
+09-23 14:37:01.203  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:01.204  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 23 lines
+09-23 14:37:01.204  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:01.231  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:01.231  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:01.236  2211  5790 D AdvertisingIdClient: AdvertisingIdClient already created.
+09-23 14:37:01.237  2211  5790 D AdvertisingIdClient: AdvertisingIdClient is not bounded. Starting to bind it...
+09-23 14:37:01.247  2211  5790 D AdvertisingIdClient: AdvertisingIdClient is bounded
+09-23 14:37:01.250  2211  5790 I AdvertisingIdClient: shouldSendLog 16392
+09-23 14:37:01.250  2211  5790 I AdvertisingIdClient: GetInfoInternal elapse 14ms
+09-23 14:37:01.260  2067  2067 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.presencemanager.service.START dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentApiService }
+09-23 14:37:01.263  2067  2067 D BoundBrokerSvc: onRebind: Intent { act=com.google.android.gms.presencemanager.service.INTERNAL_IDENTITY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentApiService }
+09-23 14:37:01.288  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:54 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:01.331  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 1280.0, 720.0) with surface size: 1280x1280
+09-23 14:37:01.354  2385  2385 W Choreographer: Frame time is 0.023026 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:01.364  1758  1758 W StaticLayout: maxLineHeight should not be -1.  maxLines:1 lineCount:1
+09-23 14:37:01.364  1758  1758 I chatty  : uid=10019(com.android.systemui) identical 1 line
+09-23 14:37:01.364  1758  1758 W StaticLayout: maxLineHeight should not be -1.  maxLines:1 lineCount:1
+09-23 14:37:01.370  2385  2385 W Choreographer: Frame time is 0.042242 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:01.387  2385  2385 W Choreographer: Frame time is 0.00793 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:01.413  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_START -p com.android.ld.appstore -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:01.413  1455  1455 D ldinit  : result:
+09-23 14:37:01.423  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_START flg=0x400020 pkg=com.android.ld.appstore (has extras) }
+09-23 14:37:01.424  1758  1758 D StatusBar: disable<e i a s b h r c s > disable2<q i n >
+09-23 14:37:01.425  3577  3649 I AppStartReceiver: onReceive, action = com.ldmnq.APP_START, extras = Bundle[{package=com.incoteam.realsaathi, pos=pc}]
+09-23 14:37:01.430  1758  2039 E EGL_emulation: tid 2039: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:01.430  1758  2039 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388bebd880, error=EGL_BAD_MATCH
+09-23 14:37:01.462  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:01.463  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_START -p com.ldmnq.launcher3 -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:01.463  1455  1455 D ldinit  : result:
+09-23 14:37:01.482  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_START flg=0x400020 pkg=com.ldmnq.launcher3 (has extras) }
+09-23 14:37:01.483  2385  5780 D AppStartReceiver: action = com.ldmnq.APP_START, packageName = com.incoteam.realsaathi, pos = pc
+09-23 14:37:01.484  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:01.487  2385  2385 W Choreographer: Frame time is 0.001236 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:01.496  1458  2198 W SurfaceFlinger: Attempting to destroy on removed layer: 6151ec0 AssistPreviewPanel#0
+09-23 14:37:01.484  1455  1455 I ldinit  : type=1400 audit(0.0:1411): avc: denied { ioctl } for path="/dev/fastpipe" dev="tmpfs" ino=3145 ioctlcmd=6865 scontext=u:r:ldinit:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:01.502  1458  2198 W SurfaceFlinger: Attempting to destroy on removed layer: af00abd DockedStackDivider#0
+09-23 14:37:01.523  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 2275.5557, 1280.0) with surface size: 1280x1280
+09-23 14:37:01.524  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 2275.5557, 1280.0) with surface size: 1280x1280
+09-23 14:37:01.549  4309  4332 W stagram.androi: Profile data size exceeds 500000 bytes
+09-23 14:37:01.820  2385  2385 W Choreographer: Frame time is 0.025084 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:01.837  2385  2385 W Choreographer: Frame time is 0.022257 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:01.854  2385  2385 W Choreographer: Frame time is 5.84E-4 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:02.135  3577  3649 I LDShopManager: tryShowLDShopRechargePopup success, packageName = com.incoteam.realsaathi, canPopup = false
+09-23 14:37:02.542  5767  5767 D libnativeloader: CrashArm64 config not exist or not readable: /system/vendor/firmware_mnt/ndnze/CrashArm64
+09-23 14:37:02.544  5767  5767 I team.realsaathi: type=1400 audit(0.0:1412): avc: denied { read } for name="Applications" dev="sdcardfs" ino=1310722 scontext=u:r:untrusted_app:s0:c80,c256,c512,c768 tcontext=u:object_r:sdcardfs:s0 tclass=lnk_file permissive=1
+09-23 14:37:02.579  5767  5767 W FirebaseApp: Default FirebaseApp failed to initialize because no default options were found. This usually means that com.google.gms:google-services was not applied to your gradle project.
+09-23 14:37:02.579  5767  5767 I FirebaseInitProvider: FirebaseApp initialization unsuccessful
+09-23 14:37:02.578  1597  1597 I Binder:1597_15: type=1400 audit(0.0:1414): avc: denied { read } for name="Applications" dev="sdcardfs" ino=1310722 scontext=u:r:system_server:s0 tcontext=u:object_r:sdcardfs:s0 tclass=lnk_file permissive=1
+09-23 14:37:02.643  5767  5767 I MMKV    : current API level = 28, libc++_shared=0
+09-23 14:37:02.643  5767  5767 I MMKV    : <MMKV.cpp:174::initialize> version v2.2.2, page size 4096, arch x86_64
+09-23 14:37:02.644  5767  5767 I MMKV    : <MMKV.cpp:231::initializeMMKV> root dir: /data/data/com.incoteam.realsaathi/files/mmkv
+09-23 14:37:02.644  5767  5767 I MMKV    : <MMKV_Android.cpp:354::enableDisableProcessMode> process mode check enable/disable: 1
+09-23 14:37:02.644  5767  5767 I MMKV    : Enable checkProcessMode()
+09-23 14:37:02.659  5767  5767 D PrebuiltCallInitializer: ------------------PrebuiltCallInitializer onCreate() called,App start------------------
+09-23 14:37:02.674  5767  5767 W team.realsaath: Accessing hidden field Landroid/os/Trace;->TRACE_TAG_APP:J (light greylist, reflection)
+09-23 14:37:02.674  5767  5767 W team.realsaath: Accessing hidden method Landroid/os/Trace;->isTagEnabled(J)Z (light greylist, reflection)
+09-23 14:37:02.748  1597  1728 D Ethernet: got request NetworkRequest [ TRACK_DEFAULT id=67, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.748  1597  1727 D WIFI_AWARE_FACTORY: got request NetworkRequest [ TRACK_DEFAULT id=67, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.748  1597  1696 D WIFI    : got request NetworkRequest [ TRACK_DEFAULT id=67, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.748  1597  1696 D WIFI_UT : got request NetworkRequest [ TRACK_DEFAULT id=67, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.749  1951  1951 D PhoneSwitcherNetworkRequstListener: got request NetworkRequest [ TRACK_DEFAULT id=67, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.807  5767  5767 D PrebuiltCallLifecycleHandler: onActivityCreated() called with: activity = [com.incoteam.realsaathi.MainActivity@89267ac], savedInstanceState = [null]
+09-23 14:37:02.807  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:02.808  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 33 lines
+09-23 14:37:02.808  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:02.855  1597  1696 D WIFI    : got request NetworkRequest [ TRACK_DEFAULT id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.855  1597  1728 D Ethernet: got request NetworkRequest [ TRACK_DEFAULT id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.855  1597  1727 D WIFI_AWARE_FACTORY: got request NetworkRequest [ TRACK_DEFAULT id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.855  1597  1696 D WIFI_UT : got request NetworkRequest [ TRACK_DEFAULT id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.855  1951  1951 D PhoneSwitcherNetworkRequstListener: got request NetworkRequest [ TRACK_DEFAULT id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:02.876  5767  5767 D PrebuiltCallLifecycleHandler: onActivityStarted() called with: activity = [com.incoteam.realsaathi.MainActivity@89267ac]
+09-23 14:37:02.878  5767  5767 D PrebuiltCallLifecycleHandler: onActivityResumed() called with: activity = [com.incoteam.realsaathi.MainActivity@89267ac]
+09-23 14:37:02.878  5767  5767 D PrebuiltCallNotificationManager: dismissCallNotification() called with: isNotificationShowed = [false]
+09-23 14:37:02.884  5767  5767 D OpenGLRenderer: Skia GL Pipeline
+09-23 14:37:02.991  2385  5765 I FA      : Application backgrounded at: timestamp_millis: 1790154420990
+09-23 14:37:02.984  2385  2385 I com.ldmnq.launcher3: type=1400 audit(0.0:1415): avc: denied { open } for comm=4D6561737572656D656E7420576F72 path="/data/local/cfg-ndnze/android7" dev="sdb2" ino=393969 scontext=u:r:untrusted_app:s0:c40,c256,c512,c768 tcontext=u:object_r:system_data_file:s0 tclass=file permissive=1
+09-23 14:37:03.037  5767  5767 W team.realsaath: Accessing hidden field Landroid/view/WindowInsets;->CONSUMED:Landroid/view/WindowInsets; (light greylist, reflection)
+09-23 14:37:03.037  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/View;->getViewRootImpl()Landroid/view/ViewRootImpl; (light greylist, reflection)
+09-23 14:37:03.038  5767  5767 W team.realsaath: Accessing hidden field Landroid/view/View$AttachInfo;->mVisibleInsets:Landroid/graphics/Rect; (light greylist, reflection)
+09-23 14:37:03.038  5767  5767 W team.realsaath: Accessing hidden field Landroid/view/ViewRootImpl;->mAttachInfo:Landroid/view/View$AttachInfo; (light greylist, reflection)
+09-23 14:37:03.038  5767  5767 W team.realsaath: Accessing hidden field Landroid/graphics/Insets;->left:I (light greylist, linking)
+09-23 14:37:03.038  5767  5767 W team.realsaath: Accessing hidden field Landroid/graphics/Insets;->top:I (light greylist, linking)
+09-23 14:37:03.038  5767  5767 W team.realsaath: Accessing hidden field Landroid/graphics/Insets;->right:I (light greylist, linking)
+09-23 14:37:03.038  5767  5767 W team.realsaath: Accessing hidden field Landroid/graphics/Insets;->bottom:I (light greylist, linking)
+09-23 14:37:02.883  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:54 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:03.182  1597  1622 W WindowManager: App freeze timeout expired.
+09-23 14:37:03.182  1597  1622 W WindowManager: Force clearing freeze: AppWindowToken{ad89196 token=Token{af3c8b1 ActivityRecord{dc94f58 u0 com.incoteam.realsaathi/.MainActivity t8}}}
+09-23 14:37:03.183  1597  1622 I WindowManager: Screen frozen for +2s284ms due to Window{d6ed86f u0 StatusBar}
+09-23 14:37:03.185  5767  5767 W team.realsaath: Accessing hidden method Landroid/text/SpannableStringInternal;->length()I (light greylist, linking)
+09-23 14:37:03.204  5767  5767 I RenderThread: type=1400 audit(0.0:1416): avc: denied { read write } for name="fastpipe" dev="tmpfs" ino=3145 scontext=u:r:untrusted_app:s0:c80,c256,c512,c768 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:03.204  5767  5767 I RenderThread: type=1400 audit(0.0:1417): avc: denied { open } for path="/dev/fastpipe" dev="tmpfs" ino=3145 scontext=u:r:untrusted_app:s0:c80,c256,c512,c768 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:03.218  5767  5767 I RenderThread: type=1400 audit(0.0:1418): avc: denied { ioctl } for path="/dev/fastpipe" dev="tmpfs" ino=3145 ioctlcmd=6864 scontext=u:r:untrusted_app:s0:c80,c256,c512,c768 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:03.233  5767  5819 I         : fastpipe: Connect success
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->create(Ljava/lang/String;Landroid/view/View;)Landroid/view/RenderNode; (light greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->getScaleX()F (dark greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setClipToBounds(Z)Z (light greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setClipToOutline(Z)Z (dark greylist, linking)
+09-23 14:37:03.234  5767  5767 I chatty  : uid=10080(com.incoteam.realsaathi) identical 1 line
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setClipToOutline(Z)Z (dark greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setLayerType(I)Z (dark greylist, linking)
+09-23 14:37:03.234  5767  5767 I chatty  : uid=10080(com.incoteam.realsaathi) identical 1 line
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setLayerType(I)Z (dark greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->getMatrix(Landroid/graphics/Matrix;)V (dark greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/DisplayListCanvas;->drawRenderNode(Landroid/view/RenderNode;)V (light greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->isValid()Z (light greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->start(II)Landroid/view/DisplayListCanvas; (light greylist, linking)
+09-23 14:37:03.234  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->end(Landroid/view/DisplayListCanvas;)V (light greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setAlpha(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setCameraDistance(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setLayerPaint(Landroid/graphics/Paint;)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setOutline(Landroid/graphics/Outline;)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setPivotX(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setPivotX(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setLeftTopRightBottom(IIII)Z (light greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setPivotX(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setRotationX(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setRotationY(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setRotation(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setScaleX(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setScaleY(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setElevation(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setTranslationX(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->setTranslationY(F)Z (dark greylist, linking)
+09-23 14:37:03.235  5767  5767 W team.realsaath: Accessing hidden method Landroid/view/RenderNode;->getScaleX()F (dark greylist, linking)
+09-23 14:37:03.237  5767  5819 I         : fastpipe: Connect success
+09-23 14:37:03.238  5767  5819 D HostConnection: HostRPC::connect sucess: app=com.incoteam.realsaathi, pid=5767, tid=5819, this=0x76388bf07400
+09-23 14:37:03.244  5767  5819 D HostConnection: queryAndSetGLESMaxVersion select gles-version: 3.1 hostGLVersion:46 process:com.incoteam.realsaathi
+09-23 14:37:03.254  5767  5819 I ConfigStore: android::hardware::configstore::V1_0::ISurfaceFlingerConfigs::hasWideColorDisplay retrieved: 0
+09-23 14:37:03.254  5767  5819 I ConfigStore: android::hardware::configstore::V1_0::ISurfaceFlingerConfigs::hasHDRDisplay retrieved: 0
+09-23 14:37:03.254  5767  5819 I OpenGLRenderer: Initialized EGL, version 1.4
+09-23 14:37:03.254  5767  5819 D OpenGLRenderer: Swap behavior 1
+09-23 14:37:03.261  5767  5819 D EGL_emulation: eglCreateContext: 0x76388be6b9c0: maj 3 min 1 rcv 4
+09-23 14:37:03.298  5767  5819 E eglCodecCommon: glUtilsParamSize: unknow param 0x000082da
+09-23 14:37:03.298  5767  5819 E eglCodecCommon: glUtilsParamSize: unknow param 0x000082e5
+09-23 14:37:03.309  5767  5819 D HostConnection: ExtendedRCEncoderContext GL_VERSION return OpenGL ES 3.1 v1
+09-23 14:37:03.316  5767  5819 E eglCodecCommon: glUtilsParamSize: unknow param 0x00008c29
+09-23 14:37:03.316  5767  5819 E eglCodecCommon: glUtilsParamSize: unknow param 0x000087fe
+09-23 14:37:03.324  5767  5819 D vndksupport: Loading /vendor/lib64/hw/android.hardware.graphics.mapper@2.0-impl.so from current namespace instead of sphal namespace.
+09-23 14:37:03.325  5767  5819 D vndksupport: Loading /vendor/lib64/hw/gralloc.default.so from current namespace instead of sphal namespace.
+09-23 14:37:03.364  5767  5819 E EGL_emulation: tid 5819: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:03.364  5767  5819 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388be27f00, error=EGL_BAD_MATCH
+09-23 14:37:03.419  1597  1611 I ActivityManager: Displayed com.incoteam.realsaathi/.MainActivity: +2s736ms
+09-23 14:37:03.414  1458  1458 I surfaceflinger: type=1400 audit(0.0:1419): avc: denied { read write } for path="/dev/fastpipe" dev="tmpfs" ino=3145 scontext=u:r:hal_graphics_composer_default:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:03.436  5767  5767 W team.realsaath: Accessing hidden method Landroid/os/Trace;->asyncTraceBegin(JLjava/lang/String;I)V (light greylist, reflection)
+09-23 14:37:03.436  5767  5767 W team.realsaath: Accessing hidden method Landroid/os/Trace;->asyncTraceEnd(JLjava/lang/String;I)V (light greylist, reflection)
+09-23 14:37:03.436  5767  5767 W team.realsaath: Accessing hidden method Landroid/os/Trace;->traceCounter(JLjava/lang/String;I)V (light greylist, reflection)
+09-23 14:37:03.437  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:70 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:03.428  1597  1597 I android.anim.lf: type=1400 audit(0.0:1420): avc: denied { call } for scontext=u:r:system_server:s0 tcontext=u:r:init:s0 tclass=binder permissive=1
+09-23 14:37:03.457  2067  2334 I FontLog : (REDACTED) Received query %s, URI %s
+09-23 14:37:03.463  2067  2334 I FontLog : (REDACTED) Query [%s] resolved to %s
+09-23 14:37:03.477  1458  1495 W SurfaceFlinger: Attempting to set client state on removed layer: Splash Screen com.incoteam.realsaathi#0
+09-23 14:37:03.477  1458  1495 W SurfaceFlinger: Attempting to destroy on removed layer: Splash Screen com.incoteam.realsaathi#0
+09-23 14:37:03.486  2067  2334 I FontLog : (REDACTED) Fetch %s end status %s
+09-23 14:37:03.498  5767  5821 W team.realsaath: Accessing hidden method Landroid/graphics/FontFamily;-><init>()V (light greylist, reflection)
+09-23 14:37:03.498  5767  5821 W team.realsaath: Accessing hidden method Landroid/graphics/FontFamily;->addFontFromAssetManager(Landroid/content/res/AssetManager;Ljava/lang/String;IZIII[Landroid/graphics/fonts/FontVariationAxis;)Z (light greylist, reflection)
+09-23 14:37:03.498  5767  5821 W team.realsaath: Accessing hidden method Landroid/graphics/FontFamily;->addFontFromBuffer(Ljava/nio/ByteBuffer;I[Landroid/graphics/fonts/FontVariationAxis;II)Z (light greylist, reflection)
+09-23 14:37:03.498  5767  5821 W team.realsaath: Accessing hidden method Landroid/graphics/FontFamily;->freeze()Z (light greylist, reflection)
+09-23 14:37:03.498  5767  5821 W team.realsaath: Accessing hidden method Landroid/graphics/FontFamily;->abortCreation()V (light greylist, reflection)
+09-23 14:37:03.498  5767  5821 W team.realsaath: Accessing hidden method Landroid/graphics/Typeface;->createFromFamiliesWithDefault([Landroid/graphics/FontFamily;Ljava/lang/String;II)Landroid/graphics/Typeface; (light greylist, reflection)
+09-23 14:37:03.499  2067  2334 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+09-23 14:37:03.503  2067  2334 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+09-23 14:37:03.852  1435  1572 D audio_hw_hal: log_func, out_standby
+09-23 14:37:03.852  1435  1572 D audio_hw_hal: raw_close_output_stream, dev=0xf5e18000, stream =0xf5e1b000
+09-23 14:37:03.852  1435  1572 D audio_hw_hal: raw_close_output_stream, stream=0xf5e1b000,  success!
+09-23 14:37:05.220  1597  1622 I system_server: Explicit concurrent copying GC freed 308047(10MB) AllocSpace objects, 22(440KB) LOS objects, 42% free, 12MB/21MB, paused 24us total 33.933ms
+09-23 14:37:05.243  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:03.447  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:70 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:05.477  1524  1535 E storaged: getDiskStats failed with result NOT_SUPPORTED and size 0
+09-23 14:37:06.173  1597  1608 I ActivityManager: START u0 {flg=0x10008000 cmp=com.incoteam.realsaathi/.ui.home.HomeActivity} from uid 10080
+09-23 14:37:06.181  1597  1608 W ActivityManager: Duplicate finish request for ActivityRecord{dc94f58 u0 com.incoteam.realsaathi/.MainActivity t8 f}
+09-23 14:37:06.181  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:45 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:06.187  1597  1679 D WindowManager: updateRotationUnchecked! mLastOrientation=-1 old-mRotation=3 old-mAltOrientation=false new-mRotation=0 new-mAltOrientation=false
+09-23 14:37:05.244  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 20 lines
+09-23 14:37:05.244  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:06.192  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_FOREGROUND -p com.android.ld.appstore -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:06.192  1455  1455 D ldinit  : result:
+09-23 14:37:06.193  1597  1679 I ActivityManager: Config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w853dp h456dp 240dpi lrg long land finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=Rect(0, 0 - 1280, 720) mWindowingMode=fullscreen mActivityType=undefined} s.23}
+09-23 14:37:06.195  1597  1679 I ActivityManager: Override config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w853dp h456dp 240dpi lrg long land finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 720, 1280) mAppBounds=Rect(0, 0 - 1280, 720) mWindowingMode=fullscreen mActivityType=undefined} s.23} for displayId=0
+09-23 14:37:06.199  3577  3577 D AndroidAutoSize: initScaledDensity = 1.5 on ConfigurationChanged
+09-23 14:37:06.200  1597  1650 D WindowManager: updateRotationUnchecked! mLastOrientation=1 old-mRotation=0 old-mAltOrientation=false new-mRotation=3 new-mAltOrientation=false
+09-23 14:37:06.202  1597  1650 I ActivityManager: Config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w480dp h829dp 240dpi lrg long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=Rect(0, 0 - 720, 1280) mWindowingMode=fullscreen mActivityType=undefined} s.24}
+09-23 14:37:06.203  1597  1650 I ActivityManager: Override config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w480dp h829dp 240dpi lrg long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 720, 1280) mAppBounds=Rect(0, 0 - 720, 1280) mWindowingMode=fullscreen mActivityType=undefined} s.24} for displayId=0
+09-23 14:37:06.209  1758  1758 D StatusBar: disable<e i a s b h r c s > disable2<q i n >
+09-23 14:37:06.212  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_FOREGROUND flg=0x400020 pkg=com.android.ld.appstore (has extras) }
+09-23 14:37:06.188  5825  5825 I sh      : type=1400 audit(0.0:1421): avc: denied { execute_no_trans } for path="/system/bin/am" dev="sda2" ino=1695 scontext=u:r:ldinit:s0 tcontext=u:object_r:system_file:s0 tclass=file permissive=1
+09-23 14:37:06.223  3577  3577 D AndroidAutoSize: initScaledDensity = 1.5 on ConfigurationChanged
+09-23 14:37:06.194  2559  2559 I utmethod.pinyin: type=1400 audit(0.0:1422): avc: denied { open } for path="/data/local/cfg-ndnze/input" dev="sdb2" ino=394054 scontext=u:r:platform_app:s0:c512,c768 tcontext=u:object_r:system_data_file:s0 tclass=file permissive=1
+09-23 14:37:06.208  5826  5826 I cmd     : type=1400 audit(0.0:1423): avc: denied { call } for scontext=u:r:ldinit:s0 tcontext=u:r:servicemanager:s0 tclass=binder permissive=1
+09-23 14:37:06.263  3577  5777 I AppStartReceiver: onReceive, action = com.ldmnq.APP_FOREGROUND, extras = Bundle[{package=com.incoteam.realsaathi, pos=pc}]
+09-23 14:37:06.263  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:06.263  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:06.264  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:06.267  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_FOREGROUND -p com.ldmnq.launcher3 -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:06.267  1455  1455 D ldinit  : result:
+09-23 14:37:06.208  5826  5826 I cmd     : type=1400 audit(0.0:1424): avc: denied { call } for scontext=u:r:ldinit:s0 tcontext=u:r:system_server:s0 tclass=binder permissive=1
+09-23 14:37:06.286  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_FOREGROUND flg=0x400020 pkg=com.ldmnq.launcher3 (has extras) }
+09-23 14:37:06.297  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:06.297  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:06.311  2385  2473 D AppStartReceiver: action = com.ldmnq.APP_FOREGROUND, packageName = com.incoteam.realsaathi, pos = pc
+09-23 14:37:06.311  5767  5767 D PrebuiltCallLifecycleHandler: onActivityCreated() called with: activity = [com.incoteam.realsaathi.ui.home.HomeActivity@5b97dce], savedInstanceState = [null]
+09-23 14:37:06.311  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:06.347  1597  1727 D WIFI_AWARE_FACTORY: got request NetworkRequest [ TRACK_DEFAULT id=69, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:06.347  1597  1728 D Ethernet: got request NetworkRequest [ TRACK_DEFAULT id=69, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:06.347  1597  1696 D WIFI    : got request NetworkRequest [ TRACK_DEFAULT id=69, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:06.347  1597  1696 D WIFI_UT : got request NetworkRequest [ TRACK_DEFAULT id=69, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:06.348  1951  1951 D PhoneSwitcherNetworkRequstListener: got request NetworkRequest [ TRACK_DEFAULT id=69, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ] with score 60
+09-23 14:37:06.380  1758  1758 D StatusBar: disable<e i a s b h r c s > disable2<q i n >
+09-23 14:37:06.384  5767  5767 W team.realsaath: Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->setUseSessionTickets(Z)V (light greylist, reflection)
+09-23 14:37:06.384  5767  5767 W team.realsaath: Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->setHostname(Ljava/lang/String;)V (light greylist, reflection)
+09-23 14:37:06.385  5767  5767 W team.realsaath: Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->getAlpnSelectedProtocol()[B (light greylist, reflection)
+09-23 14:37:06.385  5767  5767 W team.realsaath: Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->setAlpnProtocols([B)V (light greylist, reflection)
+09-23 14:37:06.388  5767  5767 W team.realsaath: Accessing hidden method Ldalvik/system/CloseGuard;->get()Ldalvik/system/CloseGuard; (light greylist, reflection)
+09-23 14:37:06.388  5767  5767 W team.realsaath: Accessing hidden method Ldalvik/system/CloseGuard;->open(Ljava/lang/String;)V (light greylist, reflection)
+09-23 14:37:06.388  5767  5767 W team.realsaath: Accessing hidden method Ldalvik/system/CloseGuard;->warnIfOpen()V (light greylist, reflection)
+09-23 14:37:06.389  5767  5767 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+09-23 14:37:06.434  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:06.434  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 20 lines
+09-23 14:37:06.434  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:06.488  5767  5767 W team.realsaath: Accessing hidden method Landroid/content/Context;->getOpPackageName()Ljava/lang/String; (light greylist, linking)
+09-23 14:37:06.528  1758  1758 W StaticLayout: maxLineHeight should not be -1.  maxLines:1 lineCount:1
+09-23 14:37:06.529  1758  1758 I chatty  : uid=10019(com.android.systemui) identical 1 line
+09-23 14:37:06.529  1758  1758 W StaticLayout: maxLineHeight should not be -1.  maxLines:1 lineCount:1
+09-23 14:37:06.539  1758  2039 E EGL_emulation: tid 2039: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:06.539  1758  2039 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388bebd880, error=EGL_BAD_MATCH
+09-23 14:37:06.596  5767  5767 D PrebuiltCallLifecycleHandler: onActivityStarted() called with: activity = [com.incoteam.realsaathi.ui.home.HomeActivity@5b97dce]
+09-23 14:37:06.597  5767  5767 D PrebuiltCallLifecycleHandler: onActivityResumed() called with: activity = [com.incoteam.realsaathi.ui.home.HomeActivity@5b97dce]
+09-23 14:37:06.597  5767  5767 D PrebuiltCallNotificationManager: dismissCallNotification() called with: isNotificationShowed = [false]
+09-23 14:37:06.615  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:06.615  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 37 lines
+09-23 14:37:06.615  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:06.623  1458  1688 W SurfaceFlinger: Attempting to destroy on removed layer: 173e6ff AssistPreviewPanel#0
+09-23 14:37:06.648  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:54 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:06.671  1458  2196 W SurfaceFlinger: Attempting to destroy on removed layer: aa9f41b DockedStackDivider#0
+09-23 14:37:06.714  1758  2039 E EGL_emulation: tid 2039: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:06.714  1758  2039 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388bebd880, error=EGL_BAD_MATCH
+09-23 14:37:06.917  5767  5819 E EGL_emulation: tid 5819: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:06.917  5767  5819 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388be27f00, error=EGL_BAD_MATCH
+09-23 14:37:07.033  1597  1679 E WindowManager: Performed 6 layouts in a row. Skipping
+09-23 14:37:07.035  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:70 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:07.056  1597  1679 I WindowManager: Screen frozen for +869ms due to Window{a71d5c u0 Splash Screen com.incoteam.realsaathi}
+09-23 14:37:07.064  1597  3228 W SchedPolicy: add_tid_to_cgroup failed to write '2385' (No space left on device); fd=25
+09-23 14:37:07.065  1597  3228 W SchedPolicy: add_tid_to_cgroup failed to write '2211' (No space left on device); fd=25
+09-23 14:37:07.071  5767  5767 D PrebuiltCallLifecycleHandler: onActivityStopped() called with: activity = [com.incoteam.realsaathi.MainActivity@89267ac]
+09-23 14:37:07.080  5767  5767 D PrebuiltCallLifecycleHandler: onActivityDestroyed() called with: activity = [com.incoteam.realsaathi.MainActivity@89267ac]
+09-23 14:37:07.110  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:54 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:07.156  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:07.156  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 34 lines
+09-23 14:37:07.156  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:07.425  3577  3686 D LdAnalyticsSDK: responseCode = 200
+09-23 14:37:07.659  5767  5767 D CallInvitationServiceImpl: api_init: 
+09-23 14:37:07.679  5767  5767 W team.realsaath: Accessing hidden method Landroid/app/ActivityThread;->currentApplication()Landroid/app/Application; (light greylist, reflection)
+09-23 14:37:07.684  5767  5767 D load ZC so: successful
+09-23 14:37:07.686  5767  5767 D createInstance: set event
+09-23 14:37:07.691  5767  5844 W team.realsaath: Accessing hidden field Lsun/misc/Unsafe;->theUnsafe:Lsun/misc/Unsafe; (light greylist, reflection)
+09-23 14:37:07.702  5767  5767 W Settings: Setting android_id has moved from android.provider.Settings.System to android.provider.Settings.Secure, returning read-only value.
+09-23 14:37:07.706  5767  5767 D CallInvitationServiceImpl: init() called with: Build.MANUFACTURER = [OPPO], Build.VERSION.SDK_INT = [28],targetSdkVersion:36
+09-23 14:37:07.706  5767  5767 D CallInvitationServiceImpl: Call initSDK() called with: version = [Prebuilt_Call:3.8.8], appID = [1255792007], appSign.isEmpty() = [true], token.isEmpty() = [false],alreadyInit: false
+09-23 14:37:07.707  5767  5767 D UIKitCore: ZEGO UIKit initExpressEngine() called with: isExpressInit = [false], appID = [1255792007], isEmpty(appSign) = [true],getVersion():UIKit: 3.5.7,Engine: 3.21.0.44939
+09-23 14:37:07.718  5767  5767 I zego_jni: *** SDK Version : 3.21.0.44939-stable-250611-205038-95d36bd34d[5202030b]
+09-23 14:37:07.718  5767  5767 I zego_jni: Init log. folder:/storage/emulated/0/Android/data/com.incoteam.realsaathi/files, maxSize:5242880, count:3
+09-23 14:37:07.720  4309  4555 E Flipper : Attempted to initialize in non-internal build
+09-23 14:37:07.784  5860  5860 I getprop : type=1400 audit(0.0:1429): avc: denied { open } for path="/data/local/cfg-ndnze/app_sysprop" dev="sdb2" ino=393988 scontext=u:r:untrusted_app:s0:c80,c256,c512,c768 tcontext=u:object_r:system_data_file:s0 tclass=file permissive=1
+09-23 14:37:07.834  5767  5767 D ZegoSignalingPluginService: ZIM init() called with: appID = [1255792007], isZIMInited = [false], getVersion() = [zim version:2.21.1.3381,zpns version: 2.7.0] 
+09-23 14:37:07.831  1436  1436 I bluetooth@1.0-s: type=1400 audit(0.0:1430): avc: denied { call } for scontext=u:r:init:s0 tcontext=u:r:bluetooth:s0 tclass=binder permissive=1
+09-23 14:37:07.850  5767  5852 W VideoCapabilities: Unrecognized profile 4 for video/hevc
+09-23 14:37:07.851  5767  5852 W VideoCapabilities: Unrecognized profile 4 for video/hevc
+09-23 14:37:07.855  5767  5852 I VideoCapabilities: Unsupported profile 4 for video/mp4v-es
+09-23 14:37:07.857  5767  5852 D MediaCodecVideoEncoder: Found candidate encoder OMX.google.h264.encoder
+09-23 14:37:07.859  5767  5852 D MediaCodecVideoEncoder: Found candidate encoder OMX.google.h264.encoder
+09-23 14:37:07.860  5767  5852 D MediaCodecVideoDecoder: Trying to find HW decoder for mime video/avc
+09-23 14:37:07.861  5767  5852 D MediaCodecVideoDecoder: Found candidate decoder OMX.google.h264.decoder
+09-23 14:37:07.861  5767  5852 D MediaCodecVideoDecoder: Found candidate decoder OMX.qcom.video.decoder.avc
+09-23 14:37:07.861  5767  5852 D MediaCodecVideoDecoder: Color: 0x7f420888
+09-23 14:37:07.861  5767  5852 D MediaCodecVideoDecoder: Color: 0x13
+09-23 14:37:07.861  5767  5852 D MediaCodecVideoDecoder: Found target decoder OMX.qcom.video.decoder.avc. Color: 0x13
+09-23 14:37:07.861  5767  5852 D MediaCodecVideoDecoder: Trying to find HW decoder for mime video/avc
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Found candidate decoder OMX.google.h264.decoder
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Found candidate decoder OMX.qcom.video.decoder.avc
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Color: 0x7f420888
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Color: 0x13
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Found target decoder OMX.qcom.video.decoder.avc. Color: 0x7f420888
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Trying to find HW decoder for mime video/x-vnd.on2.vp8
+09-23 14:37:07.862  5767  5852 D MediaCodecVideoDecoder: Found candidate decoder OMX.google.vp8.decoder
+09-23 14:37:07.863  5767  5852 D MediaCodecVideoDecoder: No HW decoder found for mime video/x-vnd.on2.vp8
+09-23 14:37:07.863  5767  5852 D MediaCodecVideoDecoder: Trying to find HW decoder for mime video/hevc
+09-23 14:37:07.863  5767  5852 D MediaCodecVideoDecoder: Found candidate decoder OMX.qcom.video.decoder.hevc
+09-23 14:37:07.863  5767  5852 D MediaCodecVideoDecoder: Color: 0x7f420888
+09-23 14:37:07.863  5767  5852 D MediaCodecVideoDecoder: Color: 0x13
+09-23 14:37:07.864  5767  5852 D MediaCodecVideoDecoder: Found target decoder OMX.qcom.video.decoder.hevc. Color: 0x13
+09-23 14:37:07.899  5767  5767 I zego_jni: [2026-9-23 17:7:7:899][Verbose][API] create done. handle: 129985209543278, app sign size: 0, log path: /storage/emulated/0/Android/data/com.incoteam.realsaathi/files/ZIMLogs, cache path: /storage/emulated/0/Android/data/com.incoteam.realsaathi/files/ZIMCaches
+09-23 14:37:07.907  5767  5767 D Storage : putLong() called with: key = [appID], value = [1255792007]
+09-23 14:37:07.907  5767  5767 I MMKV    : <MemoryFile.cpp:103::open> open fd[121], flag 0x7, /data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call
+09-23 14:37:07.907  5767  5767 I MMKV    : <MemoryFile.cpp:250::mmapOrCleanup> mmap to address [0x76391457d000], oldPtr [0x0], [/data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call]
+09-23 14:37:07.907  5767  5767 I MMKV    : <MemoryFile.cpp:109::close> closing fd[121], /data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call
+09-23 14:37:07.907  5767  5767 I MMKV    : <MemoryFile.cpp:103::open> open fd[121], flag 0x7, /data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call.crc
+09-23 14:37:07.907  5767  5767 I MMKV    : <MemoryFile.cpp:250::mmapOrCleanup> mmap to address [0x7639144e2000], oldPtr [0x0], [/data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call.crc]
+09-23 14:37:07.908  5767  5767 I MMKV    : <MemoryFile.cpp:103::open> open fd[123], flag 0x7, /data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call
+09-23 14:37:07.908  5767  5767 I MMKV    : <MemoryFile.cpp:109::close> closing fd[123], /data/data/com.incoteam.realsaathi/files/mmkv/prebuilt_call
+09-23 14:37:07.908  5767  5767 I MMKV    : <MMKV_IO.cpp:244::loadMetaInfoAndCheck> meta file [prebuilt_call] has flag [0]
+09-23 14:37:07.908  5767  5767 I MMKV    : <MMKV_IO.cpp:84::loadFromFile> loading [prebuilt_call] with 1246 actual size, file size 4096, InterProcess 0, meta info version:4
+09-23 14:37:07.908  5767  5767 I MMKV    : <MMKV_IO.cpp:89::loadFromFile> loading [prebuilt_call] with crc 465586136 sequence 1 version 4
+09-23 14:37:07.908  5767  5767 I MMKV    : <MMKV_IO.cpp:133::loadFromFile> loaded [prebuilt_call] with 6 key-values
+09-23 14:37:07.908  5767  5767 D CallInvitationServiceImpl: save_appID : appID = [1255792007],result:true
+09-23 14:37:07.908  5767  5767 D UIKitCore: renewToken() called with: isEmpty(token) = [false]
+09-23 14:37:07.908  5767  5767 D ZegoSignalingPluginService: renewToken() called with: token = [04AAAAAGq06DsAEDF8oe1pHyzCWPLnk0mFaAcAkJ0eoNWmXBW0V6KXLF5slSMep6/yLYi3xvV2T7Fn6CfGO7AniZMmCUNmQwQyJVQZ5kwU9mzjO0LPMPKRqVLW05iwMi23Gh9ttf9zsokxdSukd7HFbFIJEOnLqxHraRXkVO6dqVldTfNyWwMVsfog9uvqX4cnE5xGndhHlG/9BNbk4M1SY4hRzmm+vJFzy5MSaA==], callback = [null]
+09-23 14:37:07.909  5767  5767 I zego_jni: [2026-9-23 17:7:7:909][Verbose][API] renewToken. handle: 129985209543278, token: 04AAAAAGq06DsAEDF8oe1pHyzCWPLnk0mFaAcAkJ0eoNWmXBW0V6KXLF5slSMep6/yLYi3xvV2T7Fn6CfGO7AniZMmCUNmQwQyJVQZ5kwU9mzjO0LPMPKRqVLW05iwMi23Gh9ttf9zsokxdSukd7HFbFIJEOnLqxHraRXkVO6dqVldTfNyWwMVsfog9uvqX4cnE5xGndhHlG/9BNbk4M1SY4hRzmm+vJFzy5MSaA==
+09-23 14:37:07.909  5767  5767 D CallInvitationServiceImpl: initSDK result : true
+09-23 14:37:07.909  5767  5767 D PrebuiltUserRepository: loginUser() called with: userID = [27e2d970f5df40c4af7611471d025221], userName = [realsaathiqjc0],isLoginIng:false
+09-23 14:37:07.909  5767  5870 I zego_jni: [2026-9-23 17:7:7:909][Verbose][Callback] OnTokenRenewed: token: 04AAAAAGq06DsAEDF8oe1pHyzCWPLnk0mFaAcAkJ0eoNWmXBW0V6KXLF5slSMep6/yLYi3xvV2T7Fn6CfGO7AniZMmCUNmQwQyJVQZ5kwU9mzjO0LPMPKRqVLW05iwMi23Gh9ttf9zsokxdSukd7HFbFIJEOnLqxHraRXkVO6dqVldTfNyWwMVsfog9uvqX4cnE5xGndhHlG/9BNbk4M1SY4hRzmm+vJFzy5MSaA==, code: 6000121, msg: user is not logged in yet, seq: 1
+09-23 14:37:07.910  5767  5767 D ZegoSignalingPluginService: zim login() called with: userID = [27e2d970f5df40c4af7611471d025221], userName = [realsaathiqjc0]
+09-23 14:37:07.912  5767  5767 I zego_jni: [2026-9-23 17:7:7:912][Verbose][API] login. handle: 129985209543278, user id: 27e2d970f5df40c4af7611471d025221, user name: realsaathiqjc0, is_offline: 0, token: 04AAAAAGq06DsAEDF8oe1pHyzCWPLnk0mFaAcAkJ0eoNWmXBW0V6KXLF5slSMep6/yLYi3xvV2T7Fn6CfGO7AniZMmCUNmQwQyJVQZ5kwU9mzjO0LPMPKRqVLW05iwMi23Gh9ttf9zsokxdSukd7HFbFIJEOnLqxHraRXkVO6dqVldTfNyWwMVsfog9uvqX4cnE5xGndhHlG/9BNbk4M1SY4hRzmm+vJFzy5MSaA==
+09-23 14:37:07.912  5767  5767 D PrebuiltUserRepository: save UserID: userID = [27e2d970f5df40c4af7611471d025221],result:true
+09-23 14:37:07.996  5767  5767 D ZegoSignalingPluginService: onResult() called with: errorCode = [6000121], errorMessage = [user is not logged in yet]
+09-23 14:37:08.858  5767  5900 D ProfileInstaller: Installing profile for com.incoteam.realsaathi
+09-23 14:37:09.023  5767  5870 I zego_jni: [2026-9-23 17:7:9: 23][Verbose][Callback] OnConnectionStateChanged: state: 1, event: 1, extended_data: {}
+09-23 14:37:09.024  5767  5767 D PrebuiltUserRepository: onConnectionStateChanged() called with: zim = [im.zego.zim.internal.ZIMImpl@dcb2c11], state = [CONNECTING], event = [ACTIVE_LOGIN], extendedData = [{}]
+09-23 14:37:09.113  1597  1622 I system_server: Explicit concurrent copying GC freed 415934(14MB) AllocSpace objects, 36(784KB) LOS objects, 42% free, 12MB/22MB, paused 34us total 54.199ms
+09-23 14:37:09.134  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:09.134  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 32 lines
+09-23 14:37:09.134  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:09.232  5767  5870 I zego_jni: [2026-9-23 17:7:9:232][Verbose][Callback] OnConnectionStateChanged: state: 2, event: 1, extended_data: {}
+09-23 14:37:09.232  5767  5870 I zego_jni: [2026-9-23 17:7:9:232][Verbose][Callback] OnLoggedIn: code: 0, msg: operation was successful, seq: 2
+09-23 14:37:09.232  5767  5870 I zego_jni: [2026-9-23 17:7:9:232][Verbose][Callback] OnConversationTotalUnreadMessageCountUpdated: unread count: 0
+09-23 14:37:09.232  5767  5767 D PrebuiltUserRepository: onConnectionStateChanged() called with: zim = [im.zego.zim.internal.ZIMImpl@dcb2c11], state = [CONNECTED], event = [ACTIVE_LOGIN], extendedData = [{}]
+09-23 14:37:09.232  5767  5767 D CallInvitationServiceImpl: onPrebuiltCallUserLogin() called with: userID = [27e2d970f5df40c4af7611471d025221], userName = [realsaathiqjc0]
+09-23 14:37:09.233  5767  5767 D ZegoSignalingPluginService: enableFCMPush() called
+09-23 14:37:09.236  5767  5767 D ZegoSignalingPluginService: registerPush() called
+09-23 14:37:09.241  5767  5767 W System.err: java.lang.IllegalStateException: Default FirebaseApp is not initialized in this process com.incoteam.realsaathi. Make sure to call FirebaseApp.initializeApp(Context) first.
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.google.firebase.FirebaseApp.getInstance(FirebaseApp.java:179)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.google.firebase.messaging.FirebaseMessaging.getInstance(FirebaseMessaging.java:126)
+09-23 14:37:09.241  5767  5767 W System.err: 	at im.zego.zpns_android_plugin_fcm.FCMPushClient.register(FCMPushClient.java:38)
+09-23 14:37:09.241  5767  5767 W System.err: 	at im.zego.zpns.internal.ZPNsManagerInternal.registerPush(ZPNsManagerInternal.java:77)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.signaling.call.ZPNSRepository.registerPush(ZPNSRepository.java:66)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService.registerPush(ZegoSignalingPluginService.java:1590)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPlugin.registerPush(ZegoSignalingPlugin.java:314)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.ZegoUIKitSignalingPluginImpl.registerPush(ZegoUIKitSignalingPluginImpl.java:1229)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.push.PrebuiltCallPushRepository.registerPush(PrebuiltCallPushRepository.java:88)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.push.PrebuiltCallPushRepository.onPrebuiltUserLogin(PrebuiltCallPushRepository.java:104)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.onPrebuiltUserLogin(PrebuiltCallRepository.java:1209)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.CallInvitationServiceImpl.onPrebuiltCallUserLogin(CallInvitationServiceImpl.java:582)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.basic.PrebuiltUserRepository.onUserLoginSuccess(PrebuiltUserRepository.java:98)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.basic.PrebuiltUserRepository.access$000(PrebuiltUserRepository.java:19)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.basic.PrebuiltUserRepository$1.onConnectionStateChanged(PrebuiltUserRepository.java:44)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService$1.lambda$onConnectionStateChanged$6(ZegoSignalingPluginService.java:242)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService$1$$ExternalSyntheticLambda63.accept(D8$$SyntheticClass:0)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.adapter.utils.NotifyList.notifyAllListener(NotifyList.java:72)
+09-23 14:37:09.241  5767  5767 W System.err: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService$1.onConnectionStateChanged(ZegoSignalingPluginService.java:241)
+09-23 14:37:09.241  5767  5767 W System.err: 	at im.zego.zim.internal.generated.ZIMBridge$130.run(ZIMBridge.java:2806)
+09-23 14:37:09.241  5767  5767 W System.err: 	at android.os.Handler.handleCallback(Handler.java:873)
+09-23 14:37:09.241  5767  5767 W System.err: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+09-23 14:37:09.241  5767  5767 W System.err: 	at android.os.Looper.loop(Looper.java:193)
+09-23 14:37:09.241  5767  5767 W System.err: 	at android.app.ActivityThread.main(ActivityThread.java:6838)
+09-23 14:37:09.242  5767  5767 W System.err: 	at java.lang.reflect.Method.invoke(Native Method)
+09-23 14:37:09.242  5767  5767 W System.err: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:493)
+09-23 14:37:09.242  5767  5767 W System.err: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:860)
+09-23 14:37:09.242  5767  5767 D ZegoSignalingPluginService: zim login() result called with: errorInfo = [ZIMError{code=SUCCESS, message='operation was successful'}]
+09-23 14:37:09.242  5767  5767 D PrebuiltUserRepository: loginUser ZIM onResult() called with: errorCode = [0], message = [operation was successful]
+09-23 14:37:09.394  5767  5870 I zego_jni: [2026-9-23 17:7:9:394][Verbose][Callback] OnConversationSyncStateChanged state: 0
+09-23 14:37:09.394  5767  5870 I zego_jni: [2026-9-23 17:7:9:394][Verbose][Callback] OnConversationSyncStateChanged state: 1
+09-23 14:37:11.649  1597  4931 E memtrack: Couldn't load memtrack module
+09-23 14:37:11.649  1597  4931 W android.os.Debug: failed to get memory consumption info: -1
+09-23 14:37:12.082  2385  2395 W System  : A resource failed to call end. 
+09-23 14:37:13.014  2211  2211 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.measurement.START pkg=com.google.android.gms }
+09-23 14:37:13.015  1597  1611 E memtrack: Couldn't load memtrack module
+09-23 14:37:13.015  1597  1611 W android.os.Debug: failed to get memory consumption info: -1
+09-23 14:37:14.879  4309  4555 E Flipper : Attempted to initialize in non-internal build
+09-23 14:37:16.340  2067  2067 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.presencemanager.service.START dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentApiService }
+09-23 14:37:16.340  2067  2067 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.presencemanager.service.INTERNAL_IDENTITY dat=chimera-action: cmp=com.google.android.gms/.chimera.PersistentApiService }
+09-23 14:37:22.319  5767  5870 I zego_jni: [2026-9-23 17:7:22:319][Verbose][Callback] OnCallInvitationReceived: call id: 9087952601561641699,inviter: 793789603a6842c38d145e3a2f85565a
+09-23 14:37:22.320  5767  5767 D ZegoSignalingPluginService: onCallInvitationReceived() called with: zim = [im.zego.zim.internal.ZIMImpl@dcb2c11], info = [ZIMCallInvitationReceivedInfo{timeout=60, inviter='793789603a6842c38d145e3a2f85565a', extendedData='{"type":1,"inviter_id":"793789603a6842c38d145e3a2f85565a","inviter_name":"realsaathi_t4ho","data":"{\"call_id\":\"call_793789603a6842c38d145e3a2f85565a_1790154441456\",\"custom_data\":\"\",\"invitees\":[{\"user_id\":\"27e2d970f5df40c4af7611471d025221\",\"user_name\":\"realsaathiqjc0\"}]}"}', mode=GENERAL, create_time=1790154441756, callUserList=[ZIMCallUserInfo{userID='793789603a6842c38d145e3a2f85565a', state=ACCEPTED, extendedData=''}, ZIMCallUserInfo{userID='27e2d970f5df40c4af7611471d025221', state=INVITING, extendedData=''}]}], callID = [9087952601561641699]
+09-23 14:37:22.322  5767  5767 D PrebuiltCallRepository: onCallInvitationReceived() called with: zim = [im.zego.zim.internal.ZIMImpl@dcb2c11], info = [ZIMCallInvitationReceivedInfo{timeout=60, inviter='793789603a6842c38d145e3a2f85565a', extendedData='{"type":1,"inviter_id":"793789603a6842c38d145e3a2f85565a","inviter_name":"realsaathi_t4ho","data":"{\"call_id\":\"call_793789603a6842c38d145e3a2f85565a_1790154441456\",\"custom_data\":\"\",\"invitees\":[{\"user_id\":\"27e2d970f5df40c4af7611471d025221\",\"user_name\":\"realsaathiqjc0\"}]}"}', mode=GENERAL, create_time=1790154441756, callUserList=[ZIMCallUserInfo{userID='793789603a6842c38d145e3a2f85565a', state=ACCEPTED, extendedData=''}, ZIMCallUserInfo{userID='27e2d970f5df40c4af7611471d025221', state=INVITING, extendedData=''}]}], callID = [9087952601561641699]
+09-23 14:37:22.334  5767  5767 D ZegoSignalingPluginService: queryUserInfo() called with: userIDList = [[793789603a6842c38d145e3a2f85565a, 27e2d970f5df40c4af7611471d025221]], config = [im.zego.zim.entity.ZIMUsersInfoQueryConfig@5366405], callback = [com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository$$ExternalSyntheticLambda21@b804c5a]
+09-23 14:37:22.335  5767  5767 I zego_jni: [2026-9-23 17:7:22:335][Verbose][API] queryUsersInfo. handle: 129985209543278, user list size: 1,is_query_from_server :0
+09-23 14:37:22.335  5767  5870 I zego_jni: [2026-9-23 17:7:22:335][Verbose][Callback] OnUserInfosQueried: code: 0, msg: success, seq: 3, user info list size: 1, error user info list size: 0
+09-23 14:37:22.335  5767  5767 D ZegoSignalingPluginService: onUsersInfoQueried() called with: userList = [[ZIMUserFullInfo{baseInfo=ZIMUserInfo{userID='793789603a6842c38d145e3a2f85565a', userName='realsaathi_t4ho', userAvatarUrl''}, userAvatarUrl='', extendedData=''}]], errorUserList = [[]], errorInfo = [ZIMError{code=SUCCESS, message='success'}]
+09-23 14:37:22.335  5767  5767 D PrebuiltCallRepository: onPrebuiltReceiveCallComing() called with: zimCallInfo = [ZIMCallInfo{callID='9087952601561641699', caller='793789603a6842c38d145e3a2f85565a', create_time=1790154441756, endTime=0, state=null, mode=GENERAL, extendedData='{"type":1,"inviter_id":"793789603a6842c38d145e3a2f85565a","inviter_name":"realsaathi_t4ho","data":"{\"call_id\":\"call_793789603a6842c38d145e3a2f85565a_1790154441456\",\"custom_data\":\"\",\"invitees\":[{\"user_id\":\"27e2d970f5df40c4af7611471d025221\",\"user_name\":\"realsaathiqjc0\"}]}"}', callUserList=[ZIMCallUserInfo{userID='793789603a6842c38d145e3a2f85565a', state=ACCEPTED, extendedData=''}, ZIMCallUserInfo{userID='27e2d970f5df40c4af7611471d025221', state=INVITING, extendedData=''}]}], topActivity = [com.incoteam.realsaathi.ui.home.HomeActivity@5b97dce], pushMessage = [null], notificationAction = [null]
+09-23 14:37:22.337  5767  5767 D AndroidRuntime: Shutting down VM
+--------- beginning of crash
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: FATAL EXCEPTION: main
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: Process: com.incoteam.realsaathi, PID: 5767
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: java.lang.NullPointerException: Attempt to write to field 'boolean com.zegocloud.uikit.prebuilt.call.config.ZegoCallDurationConfig.isVisible' on a null object reference
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager.polishedCallConfig(ZegoCallManager.kt:133)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager.invitationConfig$lambda$6$lambda$5(ZegoCallManager.kt:118)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager$$ExternalSyntheticLambda1.requireConfig(D8$$SyntheticClass:0)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.CallInvitationServiceImpl.generateCallConfigFromInvite(CallInvitationServiceImpl.java:346)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.onPrebuiltReceiveCallComing(PrebuiltCallRepository.java:276)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.lambda$zimCallInvitationReceived$1$com-zegocloud-uikit-prebuilt-call-core-invite-PrebuiltCallRepository(PrebuiltCallRepository.java:245)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository$$ExternalSyntheticLambda21.onUsersInfoQueried(D8$$SyntheticClass:0)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService$29.onUsersInfoQueried(ZegoSignalingPluginService.java:1631)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository$4.onUsersInfoQueried(ZIMUserRepository.java:224)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at im.zego.zim.internal.generated.ZIMBridge$10.run(ZIMBridge.java:210)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:873)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:193)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:6838)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:493)
+09-23 14:37:22.338  5767  5767 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:860)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Crash type: 'java'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Crash time: '2026-09-23T14:37:22.338+0530'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: App ID: 'com.incoteam.realsaathi'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: App version: '1.0'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Rooted(Not Reliable): 'Yes'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: API level: '28'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: OS version: '9'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: ABI list: 'x86_64,x86,arm64-v8a,armeabi-v7a,armeabi'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Manufacturer: 'OPPO'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Brand: 'OPPO'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Model: 'PGFM10'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: Build fingerprint: 'Android/aosp_marlin/marlin:9/PQ3A.190605.03171033/3793265:user/release-keys'
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: pid: 5767, tid: 2, name: main  >>> com.incoteam.realsaathi <<<
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: java stacktrace:
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: java.lang.NullPointerException: Attempt to write to field 'boolean com.zegocloud.uikit.prebuilt.call.config.ZegoCallDurationConfig.isVisible' on a null object reference
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager.polishedCallConfig(ZegoCallManager.kt:133)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager.invitationConfig$lambda$6$lambda$5(ZegoCallManager.kt:118)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager$$ExternalSyntheticLambda1.requireConfig(D8$$SyntheticClass:0)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.zegocloud.uikit.prebuilt.call.core.CallInvitationServiceImpl.generateCallConfigFromInvite(CallInvitationServiceImpl.java:346)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.onPrebuiltReceiveCallComing(PrebuiltCallRepository.java:276)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.lambda$zimCallInvitationReceived$1$com-zegocloud-uikit-prebuilt-call-core-invite-PrebuiltCallRepository(PrebuiltCallRepository.java:245)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository$$ExternalSyntheticLambda21.onUsersInfoQueried(D8$$SyntheticClass:0)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService$29.onUsersInfoQueried(ZegoSignalingPluginService.java:1631)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository$4.onUsersInfoQueried(ZIMUserRepository.java:224)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at im.zego.zim.internal.generated.ZIMBridge$10.run(ZIMBridge.java:210)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at android.os.Handler.handleCallback(Handler.java:873)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at android.os.Looper.loop(Looper.java:193)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at android.app.ActivityThread.main(ActivityThread.java:6838)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at java.lang.reflect.Method.invoke(Native Method)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:493)
+09-23 14:37:22.339  5767  5767 E PrebuiltCallInitializer: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:860)
+09-23 14:37:22.347  1597  4931 W ActivityManager:   Force finishing activity com.incoteam.realsaathi/.ui.home.HomeActivity
+09-23 14:37:22.338  1597  1597 I Thread-23: type=1400 audit(0.0:1431): avc: denied { write } for name="qmux_bluetooth" dev="tmpfs" ino=1231 scontext=u:r:system_server:s0 tcontext=u:object_r:socket_device:s0 tclass=sock_file permissive=1
+09-23 14:37:22.363  1597  1612 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+09-23 14:37:22.363  1597  1612 W SchedPolicy: add_tid_to_cgroup failed to write '2385' (No space left on device); fd=27
+09-23 14:37:22.366  1597  1612 W SchedPolicy: add_tid_to_cgroup failed to write '5767' (No space left on device); fd=24
+09-23 14:37:22.366  5767  5767 W System.err: java.lang.Exception: call killProcess callstack! pid=5767
+09-23 14:37:22.366  5767  5767 W System.err: 	at android.os.Process.killProcess(Process.java:915)
+09-23 14:37:22.366  5767  5767 W System.err: 	at com.android.internal.os.RuntimeInit$KillApplicationHandler.uncaughtException(RuntimeInit.java:157)
+09-23 14:37:22.366  5767  5767 W System.err: 	at com.zegocloud.uikit.prebuilt.call.core.startup.PrebuiltCallInitializer$1.uncaughtException(PrebuiltCallInitializer.java:124)
+09-23 14:37:22.367  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:54 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:22.367  5767  5767 W System.err: 	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1085)
+09-23 14:37:22.367  5767  5767 W System.err: 	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1065)
+09-23 14:37:22.367  5767  5767 W System.err: 	at java.lang.Thread.dispatchUncaughtException(Thread.java:1955)
+09-23 14:37:22.367  5767  5767 I Process : Sending signal. PID: 5767 SIG: 9
+09-23 14:37:22.338  1597  1597 I Thread-23: type=1400 audit(0.0:1432): avc: denied { sendto } for path="/dev/socket/qmux_bluetooth" scontext=u:r:system_server:s0 tcontext=u:r:ldinit:s0 tclass=unix_dgram_socket permissive=1
+09-23 14:37:22.388  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1020 android.content.ContextWrapper.sendBroadcast:449 com.android.coreservice.TabManager.notifyClosing:413 com.android.coreservice.TabManager.updateInner:200 com.android.coreservice.TabManager.onUpdate:235 
+09-23 14:37:22.389  2345  2345 I CoreService: notifyClosing notify tab closed taskPackageName:com.incoteam.realsaathi
+09-23 14:37:22.389  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_KILL -p com.android.ld.appstore -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:22.389  1455  1455 D ldinit  : result:
+09-23 14:37:22.395  1597  1684 W InputDispatcher: channel 'daab2b7 com.incoteam.realsaathi/com.incoteam.realsaathi.ui.home.HomeActivity (server)' ~ Consumer closed input channel or an error occurred.  events=0x9
+09-23 14:37:22.395  1597  1684 E InputDispatcher: channel 'daab2b7 com.incoteam.realsaathi/com.incoteam.realsaathi.ui.home.HomeActivity (server)' ~ Channel is unrecoverably broken and will be disposed!
+09-23 14:37:22.404  1597  1650 D ConnectivityService: ConnectivityService NetworkRequestInfo binderDied(NetworkRequest [ TRACK_DEFAULT id=69, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ], android.os.BinderProxy@f32a4f2)
+09-23 14:37:22.404  1597  1650 D ConnectivityService: ConnectivityService NetworkRequestInfo binderDied(NetworkRequest [ TRACK_DEFAULT id=67, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED Unwanted:  Uid: 10080] ], android.os.BinderProxy@bfe2743)
+09-23 14:37:22.405  1429  1429 I Zygote  : Process 5767 exited due to signal (9)
+09-23 14:37:22.405  1597  1877 I WindowManager: WIN DEATH: Window{daab2b7 u0 com.incoteam.realsaathi/com.incoteam.realsaathi.ui.home.HomeActivity}
+09-23 14:37:22.409  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_KILL flg=0x400020 pkg=com.android.ld.appstore (has extras) }
+09-23 14:37:22.413  1597  3228 I ActivityManager: Process com.incoteam.realsaathi (pid 5767) has died: vis  +99TOP 
+09-23 14:37:22.413  1597  1615 W libprocessgroup: kill(-5767, 9) failed: No such process
+09-23 14:37:22.413  1597  1615 I libprocessgroup: Successfully killed process cgroup uid 10080 pid 5767 in 0ms
+09-23 14:37:22.415  1597  1877 W InputDispatcher: Attempted to unregister already unregistered input channel 'daab2b7 com.incoteam.realsaathi/com.incoteam.realsaathi.ui.home.HomeActivity (server)'
+09-23 14:37:22.424  1458  2196 W SurfaceFlinger: Attempting to set client state on removed layer: com.incoteam.realsaathi/com.incoteam.realsaathi.ui.home.HomeActivity#0
+09-23 14:37:22.424  1458  2196 W SurfaceFlinger: Attempting to destroy on removed layer: com.incoteam.realsaathi/com.incoteam.realsaathi.ui.home.HomeActivity#0
+09-23 14:37:22.431  1597  3228 D WindowManager: updateRotationUnchecked! mLastOrientation=5 old-mRotation=3 old-mAltOrientation=false new-mRotation=0 new-mAltOrientation=false
+09-23 14:37:22.404  5915  5915 I cmd     : type=1400 audit(0.0:1433): avc: denied { write } for path="pipe:[96098]" dev="pipefs" ino=96098 scontext=u:r:system_server:s0 tcontext=u:r:ldinit:s0 tclass=fifo_file permissive=1
+09-23 14:37:22.439  1597  3228 I ActivityManager: Config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w853dp h456dp 240dpi lrg long land finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=Rect(0, 0 - 1280, 720) mWindowingMode=fullscreen mActivityType=undefined} s.25}
+09-23 14:37:22.441  3577  3577 D AndroidAutoSize: initScaledDensity = 1.5 on ConfigurationChanged
+09-23 14:37:22.443  1597  3228 I ActivityManager: Override config changes=20000480 {1.0 404mcc1mnc [en_US] ldltr sw480dp w853dp h456dp 240dpi lrg long land finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 720, 1280) mAppBounds=Rect(0, 0 - 1280, 720) mWindowingMode=fullscreen mActivityType=undefined} s.25} for displayId=0
+09-23 14:37:22.501     1     1 I init    : type=1400 audit(0.0:1434): avc: denied { sendto } for path="/dev/socket/qmux_bluetooth" scontext=u:r:init:s0 tcontext=u:r:ldinit:s0 tclass=unix_dgram_socket permissive=1
+09-23 14:37:22.580  1758  1758 D StatusBar: disable<e i a s b h r c s > disable2<q i n >
+09-23 14:37:22.609  1597  1607 I system_server: Background concurrent copying GC freed 225665(8MB) AllocSpace objects, 24(480KB) LOS objects, 42% free, 15MB/26MB, paused 64us total 158.993ms
+09-23 14:37:22.612  1597  1622 W system_server: Long monitor contention with owner Binder:1597_13 (3228) at void com.android.server.am.ActivityManagerService$AppDeathRecipient.binderDied()(ActivityManagerService.java:1902) waiters=4 in void com.android.server.am.ActivityManagerService$LocalService.setHasOverlayUi(int, boolean) for 187ms
+09-23 14:37:22.612  1597  1622 W ActivityManager: setHasOverlayUi called on unknown pid: 5767
+09-23 14:37:22.614  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:45 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:22.615  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:22.615  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:22.615  1597  1685 I InputReader: Device reconfigured: id=3, name='input', size 1280x720, orientation 0, mode 1, display id 0
+09-23 14:37:22.616  1597  1685 I InputReader: Reconfiguring input devices.  changes=0x00000004
+09-23 14:37:22.616  1597  1685 W InputReader:   Touch device 'Virtual' did not report support for X or Y axis!  The device will be inoperable.
+09-23 14:37:22.644  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:22.644  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 22 lines
+09-23 14:37:22.644  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:22.644  2559  2571 W System  : A resource failed to call close. 
+09-23 14:37:22.644  2559  2571 I chatty  : uid=10054(com.android.inputmethod.pinyin) FinalizerDaemon identical 1 line
+09-23 14:37:22.644  2559  2571 W System  : A resource failed to call close. 
+09-23 14:37:22.674  2345  2345 I oid.coreservice: type=1400 audit(0.0:1435): avc: denied { ioctl } for path="/dev/fastpipe" dev="tmpfs" ino=3145 ioctlcmd=6867 scontext=u:r:system_app:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+09-23 14:37:22.690  1597  1613 W Looper  : Slow dispatch took 270ms android.ui h=com.android.server.am.ActivityManagerService$UiHandler c=null m=53
+09-23 14:37:22.690  1597  1613 W Looper  : Slow delivery took 247ms android.ui h=com.android.server.am.ActivityManagerService$UiHandler c=null m=30
+09-23 14:37:22.702  2067  5920 I DropBoxUtil: (REDACTED) Reading dropbox entry with tag %s and timestamp %d
+09-23 14:37:22.722  1597  1613 W Looper  : Drained
+09-23 14:37:22.758  3577  5778 I AppStartReceiver: onReceive, action = com.ldmnq.APP_KILL, extras = Bundle[{package=com.incoteam.realsaathi, pos=pc}]
+09-23 14:37:22.760  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:22.773  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_KILL -p com.ldmnq.launcher3 -f 32 --es package com.incoteam.realsaathi --es pos pc
+09-23 14:37:22.773  1455  1455 D ldinit  : result:
+09-23 14:37:22.748  2067  2067 I IntentService[D: type=1400 audit(0.0:1436): avc: denied { open } for path="/data/local/cfg-ndnze/android7" dev="sdb2" ino=393969 scontext=u:r:priv_app:s0:c512,c768 tcontext=u:object_r:system_data_file:s0 tclass=file permissive=1
+09-23 14:37:22.773  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:70 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:22.784  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_KILL flg=0x400020 pkg=com.ldmnq.launcher3 (has extras) }
+09-23 14:37:22.778  5924  5924 I cmd     : type=1400 audit(0.0:1437): avc: denied { dac_override } for capability=1 scontext=u:r:ldinit:s0 tcontext=u:r:ldinit:s0 tclass=capability permissive=1
+09-23 14:37:22.799  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:54 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:22.815  2067  5920 I DropBoxUtil: (REDACTED) Reading dropbox entry with tag %s and timestamp %d
+09-23 14:37:22.808  1597  1597 I Binder:1597_1: type=1400 audit(0.0:1438): avc: denied { read } for name="Applications" dev="sdcardfs" ino=1310722 scontext=u:r:system_server:s0 tcontext=u:object_r:sdcardfs:s0 tclass=lnk_file permissive=1
+09-23 14:37:22.835  1758  1758 W StaticLayout: maxLineHeight should not be -1.  maxLines:1 lineCount:1
+09-23 14:37:22.835  1758  1758 I chatty  : uid=10019(com.android.systemui) identical 1 line
+09-23 14:37:22.835  1758  1758 W StaticLayout: maxLineHeight should not be -1.  maxLines:1 lineCount:1
+09-23 14:37:22.864  2385  4925 D AppStartReceiver: action = com.ldmnq.APP_KILL, packageName = com.incoteam.realsaathi, pos = pc
+09-23 14:37:22.870  2385  2515 E EGL_emulation: tid 2515: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:22.871  2385  2515 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388bef9600, error=EGL_BAD_MATCH
+09-23 14:37:22.901  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:22.901  2345  2345 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1531 android.content.ContextWrapper.startService:664 android.content.ContextWrapper.startService:664 com.android.coreservice.CoreBroadcastReceiver.onReceive:70 android.app.ActivityThread.handleReceiver:3424 
+09-23 14:37:22.908  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_FOREGROUND -p com.android.ld.appstore -f 32 --es package com.ldmnq.launcher3 --es pos pc
+09-23 14:37:22.908  1455  1455 D ldinit  : result:
+09-23 14:37:22.915  1758  1758 D StatusBar: disable<e i a s b h r c s > disable2<q i n >
+09-23 14:37:22.935  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_FOREGROUND flg=0x400020 pkg=com.android.ld.appstore (has extras) }
+09-23 14:37:22.942  1758  2039 E EGL_emulation: tid 2039: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:22.942  1758  2039 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388bebd880, error=EGL_BAD_MATCH
+09-23 14:37:22.944  3577  4283 I AppStartReceiver: onReceive, action = com.ldmnq.APP_FOREGROUND, extras = Bundle[{package=com.ldmnq.launcher3, pos=pc}]
+09-23 14:37:22.945  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:22.954  2385  2515 E EGL_emulation: tid 2515: eglSurfaceAttrib(1504): error 0x3009 (EGL_BAD_MATCH)
+09-23 14:37:22.954  2385  2515 W OpenGLRenderer: Failed to set EGL_SWAP_BEHAVIOR on surface 0x76388bef9600, error=EGL_BAD_MATCH
+09-23 14:37:22.955  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:22.955  1597  1605 I chatty  : uid=1000(system) FinalizerDaemon identical 30 lines
+09-23 14:37:22.955  1597  1605 W System  : A resource failed to call close. 
+09-23 14:37:22.956  1455  1455 D ldinit  : ld_exec_cmd am broadcast -a com.ldmnq.APP_FOREGROUND -p com.ldmnq.launcher3 -f 32 --es package com.ldmnq.launcher3 --es pos pc
+09-23 14:37:22.956  1455  1455 D ldinit  : result:
+09-23 14:37:22.982  1455  1455 D ldinit  : Broadcasting: Intent { act=com.ldmnq.APP_FOREGROUND flg=0x400020 pkg=com.ldmnq.launcher3 (has extras) }
+09-23 14:37:23.017  2385  2469 D AppStartReceiver: action = com.ldmnq.APP_FOREGROUND, packageName = com.ldmnq.launcher3, pos = pc
+09-23 14:37:23.024  1597  2154 W SchedPolicy: add_tid_to_cgroup failed to write '2211' (No space left on device); fd=24
+09-23 14:37:23.030  1455  1455 D ldinit  : Broadcast completed: result=0
+09-23 14:37:23.031  2211  2211 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.measurement.START pkg=com.google.android.gms }
+09-23 14:37:23.031  2211  2211 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.measurement.START pkg=com.google.android.gms }
+09-23 14:37:23.058  1458  1494 W SurfaceFlinger: Attempting to destroy on removed layer: e1a958c AssistPreviewPanel#0
+09-23 14:37:23.093  1458  2198 W SurfaceFlinger: Attempting to destroy on removed layer: fa17e78 DockedStackDivider#0
+09-23 14:37:23.175  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 1280.0, 720.0) with surface size: 1280x720
+09-23 14:37:23.189  1597  1679 I WindowManager: Screen frozen for +758ms due to Window{823f0cf u0 com.android.systemui.ImageWallpaper}
+09-23 14:37:23.204  1758  1758 I chatty  : uid=10019(com.android.systemui) identical 2 lines
+09-23 14:37:23.205  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 1280.0, 720.0) with surface size: 1280x720
+09-23 14:37:23.205  1597  1679 W Choreographer: Frame time is 0.005657 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:23.221  1597  1679 W Choreographer: Frame time is 0.019356 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:23.230  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 1280.0, 720.0) with surface size: 1280x720
+09-23 14:37:23.231  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 1280.0, 720.0) with surface size: 1280x720
+09-23 14:37:23.238  1597  1679 W Choreographer: Frame time is 0.002519 ms in the future!  Check that graphics HAL is generating vsync timestamps using the correct timebase.
+09-23 14:37:23.241  1758  1758 I ImageWallpaper: Redrawing in rect: RectF(0.0, 0.0, 1280.0, 720.0) with surface size: 1280x720
+09-23 14:37:23.372  2385  2515 W OpenGLRenderer: Incorrectly called buildLayer on View: ShortcutAndWidgetContainer, destroying layer...
+09-23 14:37:24.391  4309  4555 E Flipper : Attempted to initialize in non-internal build

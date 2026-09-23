@@ -1,0 +1,23 @@
+--------- beginning of main
+--------- beginning of system
+--------- beginning of crash
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: FATAL EXCEPTION: main
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: Process: com.incoteam.realsaathi, PID: 5956
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: java.lang.NullPointerException: Attempt to write to field 'boolean com.zegocloud.uikit.prebuilt.call.config.ZegoCallDurationConfig.isVisible' on a null object reference
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager.polishedCallConfig(ZegoCallManager.kt:133)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager.invitationConfig$lambda$6$lambda$5(ZegoCallManager.kt:118)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.incoteam.realsaathi.core.calling.ZegoCallManager$$ExternalSyntheticLambda1.requireConfig(D8$$SyntheticClass:0)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.CallInvitationServiceImpl.generateCallConfigFromInvite(CallInvitationServiceImpl.java:346)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.onPrebuiltReceiveCallComing(PrebuiltCallRepository.java:276)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository.lambda$zimCallInvitationReceived$1$com-zegocloud-uikit-prebuilt-call-core-invite-PrebuiltCallRepository(PrebuiltCallRepository.java:245)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.zegocloud.uikit.prebuilt.call.core.invite.PrebuiltCallRepository$$ExternalSyntheticLambda21.onUsersInfoQueried(D8$$SyntheticClass:0)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.zegocloud.uikit.plugin.signaling.ZegoSignalingPluginService$29.onUsersInfoQueried(ZegoSignalingPluginService.java:1631)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository$4.onUsersInfoQueried(ZIMUserRepository.java:224)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at im.zego.zim.internal.generated.ZIMBridge$10.run(ZIMBridge.java:210)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:873)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:193)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:6838)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:493)
+09-23 14:39:13.903  5956  5956 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:860)

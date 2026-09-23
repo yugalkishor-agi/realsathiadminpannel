@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
       rechargeAmountRupees: row.recharge_amount_rupees,
       status: row.status,
       counterpartyName: row.metadata?.counterpartyName ?? null,
+      callStatus: row.metadata?.callStatus ?? null,
       durationSeconds: row.metadata?.durationSeconds ?? null,
       messageCount: row.metadata?.messageCount ?? null,
       createdAt: row.created_at,

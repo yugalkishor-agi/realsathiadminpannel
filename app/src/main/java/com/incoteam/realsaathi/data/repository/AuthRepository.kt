@@ -12,6 +12,7 @@ import com.incoteam.realsaathi.data.model.auth.LanguagesResponse
 import com.incoteam.realsaathi.data.model.auth.RandomMatchRequest
 import com.incoteam.realsaathi.data.model.auth.RandomMatchResponse
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
+import com.incoteam.realsaathi.data.model.auth.CallEventRequest
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionResponse
 import com.incoteam.realsaathi.data.model.auth.RefreshSessionRequest
 import com.incoteam.realsaathi.data.model.auth.RefreshSessionResponse
@@ -308,6 +309,20 @@ class AuthRepository(
                     sessionToken = sessionToken(activeToken),
                     request = request
                 )
+            }
+        }
+    }
+
+    suspend fun recordCallEvent(
+        accessToken: String,
+        request: CallEventRequest
+    ): Result<RecordWalletTransactionResponse> = runCatching {
+        executeProtectedRequest(
+            accessToken = accessToken,
+            fallbackMessage = "Unable to record call activity right now."
+        ) { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.CALL_EVENTS_URL) { url ->
+                authApiService.recordCallEvent(url, sessionToken(activeToken), request)
             }
         }
     }

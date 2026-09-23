@@ -19,6 +19,7 @@ data class HostDashboardLog(
     val duration: String,
     val durationSeconds: Long? = null,
     val messageCount: Int? = null,
+    val callStatus: String? = null,
     val amount: Int,
     val time: String,
     val createdAt: String? = null

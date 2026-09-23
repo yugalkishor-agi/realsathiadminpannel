@@ -64,7 +64,8 @@ data class User(
     val presence: UserPresence,
     val ratePerMinute: Int,
     val busyForMinutes: Int? = null,
-    val publicId: String? = null
+    val publicId: String? = null,
+    val hostStories: List<RemoteHostStory> = emptyList()
 )
 
 data class BlockedProfileUser(

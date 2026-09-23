@@ -9,6 +9,7 @@ import com.incoteam.realsaathi.data.model.auth.LanguagesResponse
 import com.incoteam.realsaathi.data.model.auth.RandomMatchRequest
 import com.incoteam.realsaathi.data.model.auth.RandomMatchResponse
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
+import com.incoteam.realsaathi.data.model.auth.CallEventRequest
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionResponse
 import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
 import com.incoteam.realsaathi.data.model.auth.ReportUserResponse
@@ -147,6 +148,13 @@ interface AuthApiService {
         @Url url: String,
         @Header("X-Session-Token") sessionToken: String,
         @Body request: RecordWalletTransactionRequest
+    ): Response<RecordWalletTransactionResponse>
+
+    @POST
+    suspend fun recordCallEvent(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String,
+        @Body request: CallEventRequest
     ): Response<RecordWalletTransactionResponse>
 
     @POST

@@ -178,6 +178,7 @@ import androidx.core.content.ContextCompat
 import com.incoteam.realsaathi.R
 import com.incoteam.realsaathi.RealSaathiApp
 import com.incoteam.realsaathi.core.session.SessionManager
+import com.incoteam.realsaathi.core.calling.CallLifecycleEvent
 import com.incoteam.realsaathi.data.model.auth.DiscoveryHost
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
 import com.incoteam.realsaathi.data.model.auth.RechargeOrderRequest
@@ -188,6 +189,7 @@ import com.incoteam.realsaathi.data.model.auth.SupportChatRequest
 import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
 import com.incoteam.realsaathi.data.repository.AuthRepository
 import java.io.File
+import java.security.MessageDigest
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -209,6 +211,7 @@ import kotlin.math.sin
 fun RealSaathiHomeApp(
     sessionManager: SessionManager,
     activeCall: ActiveCallSession?,
+    callEvent: CallLifecycleEvent? = null,
     startInProfileSetup: Boolean,
     onStartCall: (ActiveCallSession) -> Unit,
     onEndCall: () -> Unit,
@@ -415,6 +418,7 @@ fun RealSaathiHomeApp(
             homeUsers = homeUsers,
             isHomeRefreshing = isHomeRefreshing,
             activeCall = activeCall,
+            callEvent = callEvent,
             startInProfileSetup = startInProfileSetup,
             onStartCall = startCallWithSharedLogic,
             onEndCall = onEndCall,
@@ -435,8 +439,8 @@ private const val FaceMissingCameraTimeoutMillis = 5_000L
 private const val OfflineHostReturnMillis = 10L * 60L * 1000L
 private const val CallLowTimeWarningSeconds = 2L * 60L
 private const val SensitiveChatPlaceholder = "Sensitive message"
-private const val AudioCallRateCoinsPerMinute = 14
-private const val VideoCallRateCoinsPerMinute = 66
+private const val AudioCallRateCoinsPerMinute = 35
+private const val VideoCallRateCoinsPerMinute = 65
 private const val ChatMessageCostCoins = 1
 
 private data class PendingVoiceNoteDraft(
@@ -672,7 +676,8 @@ private fun DiscoveryHost.toHomeUser(): User {
         language = nativeLanguages.firstOrNull().orEmpty().ifBlank { preferredLanguage.ifBlank { "All" } },
         presence = livePresence,
         ratePerMinute = hostAudioRate.takeIf { it > 0 } ?: AudioCallRateCoinsPerMinute,
-        publicId = publicId
+        publicId = publicId,
+        hostStories = hostStories
     )
 }
 
@@ -708,7 +713,7 @@ private fun userMatchesDiscoveryTopic(user: User, topic: String): Boolean {
 }
 
 private fun buildHostStories(
-    context: Context,
+    users: List<User>,
     nowMillis: Long = System.currentTimeMillis()
 ): List<HostStory> {
     val realSaathiStoryUser = User(
@@ -719,33 +724,6 @@ private fun buildHostStories(
         presence = UserPresence.ONLINE,
         ratePerMinute = 0
     )
-    val uploadedStories = UserPrefs.getHostUploadedStories(context, nowMillis)
-    val uploadedHostStory = uploadedStories.takeIf { it.isNotEmpty() }?.let { stories ->
-        HostStory(
-            user = User(
-                id = stories.first().ownerId.ifBlank { "host-preview-story" },
-                name = stories.first().ownerName.ifBlank {
-                    UserPrefs.getHostDisplayName(context).ifBlank { "Aisha" }
-                },
-                interests = listOf("Host"),
-                language = "Hindi",
-                presence = UserPresence.ONLINE,
-                ratePerMinute = 0
-            ),
-            moments = stories.map { story ->
-                HostStoryMoment(
-                    vibeTitle = story.title,
-                    caption = story.caption,
-                    mediaUri = story.mediaUri,
-                    mediaType = story.mediaType
-                )
-            },
-            gradientStart = Color(0xFF6F2BFF),
-            gradientEnd = Color(0xFFEF476F),
-            accent = Color(0xFFF8F272)
-        )
-    }
-
     return buildList {
         add(
             HostStory(
@@ -769,8 +747,32 @@ private fun buildHostStories(
                 accent = Color(0xFFBEF264)
             )
         )
-        uploadedHostStory?.let { add(it) }
-
+        users.forEach { user ->
+            val stories = user.hostStories
+                .map { it.toUploadedHostStory() }
+                .filter {
+                    it.createdAtMillis > 0L &&
+                        it.createdAtMillis + (24L * 60L * 60L * 1000L) > nowMillis
+                }
+            if (stories.isNotEmpty()) {
+                add(
+                    HostStory(
+                        user = user,
+                        moments = stories.map { story ->
+                            HostStoryMoment(
+                                vibeTitle = story.title,
+                                caption = story.caption,
+                                mediaUri = story.mediaUri,
+                                mediaType = story.mediaType
+                            )
+                        },
+                        gradientStart = Color(0xFF6F2BFF),
+                        gradientEnd = Color(0xFFEF476F),
+                        accent = Color(0xFFF8F272)
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -780,6 +782,7 @@ private fun MainScaffold(
     homeUsers: SnapshotStateList<User>,
     isHomeRefreshing: Boolean,
     activeCall: ActiveCallSession?,
+    callEvent: CallLifecycleEvent?,
     startInProfileSetup: Boolean,
     onStartCall: (ActiveCallSession) -> Unit,
     onEndCall: () -> Unit,
@@ -805,6 +808,21 @@ private fun MainScaffold(
     var isRechargeCreating by remember { mutableStateOf(false) }
     val blockedThreadIds = remember { mutableStateListOf<String>() }
     val callHistoryList = remember { mutableStateListOf<CallHistory>() }
+    LaunchedEffect(callEvent?.callId, callEvent?.status, callEvent?.durationSeconds) {
+        val event = callEvent ?: return@LaunchedEffect
+        val isCustomerCall = !sessionManager.isHost()
+        if (!isCustomerCall) return@LaunchedEffect
+        callHistoryList.add(
+            0,
+            CallHistory(
+                userId = event.counterpartyId,
+                name = event.counterpartyName,
+                startedAtMillis = System.currentTimeMillis(),
+                durationSeconds = event.durationSeconds,
+                isVideo = event.isVideo
+            )
+        )
+    }
     val chatThreads = remember {
         mutableStateListOf<ChatThread>().apply {
             add(buildSupportThread())
@@ -917,6 +935,13 @@ private fun MainScaffold(
                     )
                 }
             }
+    }
+
+    LaunchedEffect(callEvent?.callId, callEvent?.status, callEvent?.durationSeconds) {
+        if (callEvent != null) {
+            delay(600L)
+            refreshWallet()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -2686,7 +2711,7 @@ private fun HomeScreen(
         }
     }
 
-    val hostStories = buildHostStories(context, storyFeedClock)
+    val hostStories = buildHostStories(users, storyFeedClock)
     val markStoryViewed: (String) -> Unit = { storyId ->
         if (storyId !in viewedStoryIds) {
             viewedStoryIds.add(storyId)
@@ -3615,6 +3640,7 @@ private fun HostStoryViewer(
 ) {
     if (stories.isEmpty()) return
 
+    val context = LocalContext.current
     val initialPage = initialStoryIndex.coerceIn(0, stories.lastIndex)
     val pagerState = rememberPagerState(
         initialPage = initialPage,
@@ -3681,6 +3707,21 @@ private fun HostStoryViewer(
     val currentStory = stories[currentStoryIndex]
     val currentMomentIndex = momentIndexFor(currentStoryIndex)
     val currentMoment = currentStory.moments[currentMomentIndex]
+
+    LaunchedEffect(currentStoryIndex, currentMomentIndex, stories.size) {
+        val preloadUris = buildList {
+            currentMoment.mediaUri
+                ?.takeIf { currentMoment.mediaType == HostStoryMediaType.VIDEO }
+                ?.let(::add)
+            val nextMoment = currentStory.moments.getOrNull(currentMomentIndex + 1)
+            nextMoment?.mediaUri
+                ?.takeIf { nextMoment.mediaType == HostStoryMediaType.VIDEO }
+                ?.let(::add)
+        }.distinct()
+        withContext(Dispatchers.IO) {
+            preloadUris.forEach { cacheStoryVideoFile(context, it) }
+        }
+    }
 
     LaunchedEffect(currentStoryIndex, currentMomentIndex, currentMoment.mediaUri, stories.size) {
         onStoryViewed(currentStory.user.id)
@@ -4032,26 +4073,33 @@ private fun StoryMomentMedia(
     mediaType: HostStoryMediaType,
     modifier: Modifier = Modifier
 ) {
-    val parsedUri = remember(mediaUri) { Uri.parse(mediaUri) }
     if (mediaType == HostStoryMediaType.VIDEO) {
-        AndroidView(
-            modifier = modifier,
-            factory = { context ->
-                android.widget.VideoView(context).apply {
-                    setOnPreparedListener { player ->
-                        player.isLooping = true
-                        start()
+        val context = LocalContext.current
+        val cachedVideoState = produceState<File?>(initialValue = null, key1 = mediaUri) {
+            value = cacheStoryVideoFile(context, mediaUri)
+        }
+        Box(modifier = modifier.background(Color.Black)) {
+            cachedVideoState.value?.let { cachedFile ->
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { viewContext ->
+                        android.widget.VideoView(viewContext).apply {
+                            setOnPreparedListener { player ->
+                                player.isLooping = true
+                                start()
+                            }
+                        }
+                    },
+                    update = { view ->
+                        if (view.tag != cachedFile.absolutePath) {
+                            view.tag = cachedFile.absolutePath
+                            view.setVideoURI(Uri.fromFile(cachedFile))
+                            view.start()
+                        }
                     }
-                }
-            },
-            update = { view ->
-                if (view.tag != mediaUri) {
-                    view.tag = mediaUri
-                    view.setVideoURI(parsedUri)
-                    view.start()
-                }
+                )
             }
-        )
+        }
     } else {
         val context = LocalContext.current
         val imageBitmapState = produceState<ImageBitmap?>(initialValue = null, key1 = mediaUri) {
@@ -4067,6 +4115,41 @@ private fun StoryMomentMedia(
         }
     }
 }
+
+private suspend fun cacheStoryVideoFile(context: Context, mediaUri: String): File? =
+    withContext(Dispatchers.IO) {
+        if (mediaUri.isBlank()) return@withContext null
+        if (!mediaUri.startsWith("http://") && !mediaUri.startsWith("https://")) {
+            return@withContext File(Uri.parse(mediaUri).path.orEmpty()).takeIf { it.exists() }
+        }
+        runCatching {
+            val cacheDirectory = File(context.cacheDir, "host_story_videos").apply { mkdirs() }
+            val cacheKey = MessageDigest.getInstance("SHA-256")
+                .digest(mediaUri.toByteArray())
+                .joinToString("") { byte -> "%02x".format(byte) }
+            val cachedFile = File(cacheDirectory, "$cacheKey.mp4")
+            if (cachedFile.exists() && cachedFile.length() > 0L) return@runCatching cachedFile
+
+            val temporaryFile = File(cacheDirectory, "$cacheKey.part-${System.nanoTime()}")
+            val connection = URL(mediaUri).openConnection().apply {
+                connectTimeout = 12_000
+                readTimeout = 20_000
+                useCaches = true
+            }
+            connection.getInputStream().use { input ->
+                temporaryFile.outputStream().use { output ->
+                    input.copyTo(output, bufferSize = 64 * 1024)
+                }
+            }
+            if (temporaryFile.length() <= 0L || temporaryFile.length() > 50L * 1024L * 1024L) {
+                temporaryFile.delete()
+                null
+            } else {
+                temporaryFile.renameTo(cachedFile)
+                cachedFile.takeIf { it.exists() }
+            }
+        }.getOrNull()
+    }
 
 private suspend fun loadStoryImageBitmap(
     context: Context,
@@ -4162,6 +4245,7 @@ private data class WalletTransactionEntry(
     val coinsDelta: Int,
     val rechargeAmountRupees: Int = 0,
     val counterpartyName: String? = null,
+    val callStatus: String? = null,
     val durationSeconds: Long? = null,
     val messageCount: Int? = null,
     val syncStatus: WalletSyncStatus = WalletSyncStatus.SYNCED
@@ -4210,6 +4294,7 @@ private fun RemoteWalletTransaction.toWalletTransactionEntry(): WalletTransactio
         coinsDelta = coinsDelta,
         rechargeAmountRupees = rechargeAmountRupees,
         counterpartyName = counterpartyName?.let(::displayName),
+        callStatus = callStatus,
         durationSeconds = durationSeconds,
         messageCount = messageCount,
         syncStatus = WalletSyncStatus.SYNCED
@@ -4237,6 +4322,7 @@ private fun WalletTransactionEntry.toRecordWalletTransactionRequest(): RecordWal
             WalletTransactionStatus.FAILED -> "failed"
         },
         counterpartyName = counterpartyName,
+        callStatus = null,
         durationSeconds = durationSeconds,
         messageCount = messageCount
     )

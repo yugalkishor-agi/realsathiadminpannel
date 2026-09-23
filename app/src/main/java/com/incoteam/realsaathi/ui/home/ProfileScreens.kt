@@ -127,9 +127,9 @@ fun ProfileScreen(
     val app = remember(context) { context.applicationContext as RealSaathiApp }
     val authRepository = remember(app) { app.authRepository }
     val scope = rememberCoroutineScope()
-    var screen by remember {
+    var screen by remember(forceEditProfileOnLaunch) {
         mutableStateOf<ProfileRoute>(
-            ProfileRoute.Profile
+            if (forceEditProfileOnLaunch) ProfileRoute.EditProfile else ProfileRoute.Profile
         )
     }
     var profileRefresh by rememberSaveable { mutableStateOf(0) }
@@ -273,7 +273,7 @@ fun ProfileScreen(
                 onInnerBack()
             },
             onProfileUpdated = onProfileUpdated,
-            isSetupFlow = false
+            isSetupFlow = forceEditProfileOnLaunch
         )
         ProfileRoute.Wallet -> {
             LaunchedEffect(Unit) {
@@ -1082,22 +1082,43 @@ private fun ProfileHome(
     val nickname = safeProfileValue(UserPrefs.getNickname(context), "realsaathi_user")
     val phone = safeProfileValue(sessionManager.getPhoneNumber(), "Not added")
     val avatar = avatarList.firstOrNull { it.id == UserPrefs.getAvatar(context) } ?: avatarList.first()
-    ProfilePageScaffold(title = "Profile", onBack = {}, showBackButton = false) {
+    ProfilePageScaffold(
+        title = "",
+        onBack = {},
+        showBackButton = false,
+        showHeader = false
+    ) {
+        Spacer(Modifier.height(8.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
-                .background(CardBg)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Accent1.copy(alpha = 0.32f), CardBgMuted, CardBg)
+                    )
+                )
+                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(24.dp))
                 .padding(horizontal = 18.dp, vertical = 20.dp)
         ) {
             AvatarBubble(avatar = avatar, size = 64.dp)
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(nickname, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-
+                Spacer(Modifier.height(4.dp))
+                Text(phone, color = TextSubtle, fontSize = 12.sp)
             }
-            Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.clickable { onEditProfile() })
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.10f))
+                    .clickable { onEditProfile() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit profile", tint = Color.White, modifier = Modifier.size(18.dp))
+            }
         }
 
         Spacer(Modifier.height(28.dp))
@@ -1445,6 +1466,7 @@ internal fun ProfilePageScaffold(
     title: String,
     onBack: () -> Unit,
     showBackButton: Boolean = true,
+    showHeader: Boolean = true,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -1459,7 +1481,9 @@ internal fun ProfilePageScaffold(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-                if (showBackButton) {
+                if (!showHeader) {
+                    Spacer(Modifier.height(1.dp))
+                } else if (showBackButton) {
                     RealSaathiBackHeader(title = title, onBack = onBack)
                 } else {
                     AppSectionHeader(title = title, subtitle = "", showWalletChip = false)
@@ -1470,6 +1494,7 @@ internal fun ProfilePageScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .then(if (!showHeader) Modifier.statusBarsPadding() else Modifier)
                     .padding(horizontal = 16.dp),
                 content = content
             )
@@ -1582,10 +1607,27 @@ private fun TransactionsScreen(
 
 @Composable
 private fun ProfileItem(text: String, danger: Boolean = false, onClick: () -> Unit = {}) {
-    Box(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(CardBg).clickable { onClick() }.padding(18.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(CardBg)
+            .clickable { onClick() }
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text, color = if (danger) DangerRed else Color.White, fontWeight = FontWeight.Bold)
+        Text(
+            text,
+            color = if (danger) DangerRed else Color.White,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = if (danger) DangerRed.copy(alpha = 0.72f) else TextSubtle,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 

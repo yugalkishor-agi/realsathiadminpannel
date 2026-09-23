@@ -151,8 +151,7 @@ class OtpVerificationActivity : AppCompatActivity() {
                     state.data.profile?.let { profile ->
                         UserPrefs.syncFromRemoteProfile(this, profile)
                     }
-                    val shouldForceProfileSetup =
-                        state.data.isNewUser || sessionManager.needsProfileSetup()
+                    val shouldForceProfileSetup = state.data.isNewUser
                     startActivity(
                         Intent(this, HomeActivity::class.java).apply {
                             putExtra(HomeActivity.EXTRA_FORCE_PROFILE_SETUP, shouldForceProfileSetup)

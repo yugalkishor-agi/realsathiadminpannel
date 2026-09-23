@@ -126,12 +126,19 @@ Deno.serve(async (req) => {
         : total;
     }, 0);
 
-    const logs = earningRows.slice(0, 20).map((row) => ({
+    const logs = (ledgerRows ?? []).filter((row) =>
+      ["audio_call", "video_call", "chat"].includes(String(row.kind ?? "").trim().toLowerCase())
+    ).slice(0, 50).map((row) => ({
       name: String(row.metadata?.counterpartyName ?? row.title ?? "Caller"),
+      kind: String(row.kind ?? ""),
       isVideo: String(row.kind ?? "").trim().toLowerCase() === "video_call",
       duration: formatDuration(Number(row.metadata?.durationSeconds ?? 0)),
+      durationSeconds: Number(row.metadata?.durationSeconds ?? 0),
+      messageCount: Number(row.metadata?.messageCount ?? 0),
       amount: Math.round(asNumber(row.rupees_delta)),
       time: formatLogTime(String(row.created_at ?? "")),
+      createdAt: String(row.created_at ?? ""),
+      callStatus: String(row.metadata?.callStatus ?? ""),
     }));
 
     return jsonResponse({

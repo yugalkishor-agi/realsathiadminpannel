@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
         host_video_live: hostVideoLive,
         host_audio_rate: hostAudioRate,
         host_video_rate: hostVideoRate,
+        host_status: "approved",
         host_profile_photo_url: hostProfilePhotoUrl,
         host_story_items: hostStories,
         is_online: hostAudioLive || hostVideoLive,

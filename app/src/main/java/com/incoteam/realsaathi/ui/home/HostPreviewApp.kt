@@ -115,6 +115,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -124,7 +125,6 @@ import com.incoteam.realsaathi.RealSaathiApp
 import com.incoteam.realsaathi.R
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.model.auth.HostKycRequest
-import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
 import com.incoteam.realsaathi.data.model.auth.RemoteWalletTransaction
 import com.incoteam.realsaathi.data.model.auth.SaveHostSettingsRequest
 import com.incoteam.realsaathi.data.model.auth.SaveProfileRequest
@@ -148,8 +148,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private const val HostDemoWalletBalance = 10700
 
 @Composable
 fun HostPreviewApp(
@@ -197,17 +195,12 @@ fun HostPreviewApp(
     val withdrawalTransactions = remember {
         mutableStateListOf<HostWithdrawalTransaction>()
     }
-    val initialChatThreads = remember { buildInitialHostChatThreads() }
-    val chatThreads = remember {
-        mutableStateListOf<ChatThread>().apply {
-            addAll(initialChatThreads)
-        }
-    }
+    val chatThreads = remember { mutableStateListOf<ChatThread>() }
     var selectedChatThreadId by rememberSaveable { mutableStateOf<String?>(null) }
     var hostDashboardLoading by remember { mutableStateOf(true) }
     var isHostHomeRefreshing by remember { mutableStateOf(false) }
     var totalEarnings by rememberSaveable { mutableStateOf(0) }
-    var walletBalance by rememberSaveable { mutableStateOf(HostDemoWalletBalance) }
+    var walletBalance by rememberSaveable { mutableStateOf(0) }
     var todayEarnings by rememberSaveable { mutableStateOf(0) }
     var pendingCapture by remember { mutableStateOf<PendingHostCapture?>(null) }
     var switchingToCustomerMode by remember { mutableStateOf(false) }
@@ -301,7 +294,7 @@ fun HostPreviewApp(
                 hostName = response.user.displayName.orEmpty().ifBlank { hostName }
                 applyRemoteHostProfile(response.profile)
                 totalEarnings = response.wallet.totalEarnings
-                walletBalance = response.wallet.totalEarnings.takeIf { it > 0 } ?: HostDemoWalletBalance
+                walletBalance = response.wallet.totalEarnings
                 todayEarnings = response.wallet.todayEarnings
                 logs.clear()
                 logs.addAll(
@@ -315,7 +308,8 @@ fun HostPreviewApp(
                             messageCount = log.messageCount ?: 0,
                             amount = log.amount,
                             time = log.time,
-                            createdAt = log.createdAt.orEmpty()
+                            createdAt = log.createdAt.orEmpty(),
+                            callStatus = log.callStatus.orEmpty()
                         )
                     }
                 )
@@ -414,46 +408,13 @@ fun HostPreviewApp(
         }
     }
 
-    fun recordHostEarning(amount: Int, threadTitle: String) {
-        if (amount <= 0) return
-        totalEarnings += amount
-        todayEarnings += amount
-        logs.add(
-            0,
-            HostLog(
-                name = threadTitle.ifBlank { "Chat earning" },
-                kind = "chat",
-                isVideo = false,
-                duration = "1 msg",
-                durationSeconds = 0L,
-                messageCount = 1,
-                amount = amount,
-                time = "Just now",
-                createdAt = isoNow()
-            )
-        )
-
-        scope.launch {
-            authRepository.recordWalletTransaction(
-                accessToken = sessionManager.getAccessToken(),
-                request = RecordWalletTransactionRequest(
-                    kind = "chat",
-                    title = threadTitle.ifBlank { "Chat earning" },
-                    detail = "Host chat message earning",
-                    amountText = "+₹$amount",
-                    coinsDelta = 0,
-                    rupeesDelta = amount,
-                    counterpartyName = threadTitle.ifBlank { null },
-                    messageCount = 1
-                )
-            ).onFailure {
-                toast(context, "Earning ledger sync pending hai.")
-            }
-        }
-    }
 
     LaunchedEffect(Unit) {
         refreshHostDashboard(showErrors = true)
+    }
+
+    LaunchedEffect(tab) {
+        if (tab == 1) refreshHostDashboard(showErrors = false)
     }
 
     LaunchedEffect(showWallet) {
@@ -779,14 +740,7 @@ fun HostPreviewApp(
                     threads = chatThreads,
                     selectedThreadId = selectedChatThreadId,
                     onOpenThread = { threadId -> selectedChatThreadId = threadId },
-                    onCloseThread = { selectedChatThreadId = null },
-                    onEarnMessage = { amount ->
-                        val threadTitle = chatThreads
-                            .firstOrNull { it.id == selectedChatThreadId }
-                            ?.title
-                            .orEmpty()
-                        recordHostEarning(amount, threadTitle)
-                    }
+                    onCloseThread = { selectedChatThreadId = null }
                 )
             } else if (tab == 3) {
                 HostProfileHome(
@@ -2692,7 +2646,7 @@ private fun HostPage(
 private fun HostSectionHeader(
     title: String,
     subtitle: String,
-    walletBalance: Int = HostDemoWalletBalance,
+    walletBalance: Int = 0,
     totalEarnings: Int = 0,
     onWalletClick: () -> Unit = {},
     showWalletChip: Boolean = true,
@@ -3543,7 +3497,6 @@ private fun HostWalletScreen(
 
 @Composable
 private fun HostWalletBalanceCard(walletBalance: Int, totalEarnings: Int, todayEarnings: Int) {
-    val context = LocalContext.current
     val displayBalance = walletBalance
     HostCard {
         Row(
@@ -3565,21 +3518,20 @@ private fun HostWalletBalanceCard(walletBalance: Int, totalEarnings: Int, todayE
             }
             Surface(
                 modifier = Modifier
-                    .widthIn(min = 124.dp)
-                    .align(Alignment.CenterVertically)
-                    .clickable { toast(context, "Withdrawal request flow coming soon.") },
+                    .widthIn(min = 146.dp)
+                    .align(Alignment.CenterVertically),
                 shape = RoundedCornerShape(999.dp),
-                color = Accent2
+                color = Color.White.copy(alpha = 0.08f)
             ) {
                 Box(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Withdraw",
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
+                        "Payout unavailable",
+                        color = TextSubtle,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -3781,7 +3733,7 @@ private fun HostRecentHistoryHeader() {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Only completed audio calls, video calls, paid messages, and earnings are listed below.",
+                text = "Audio/video calls, declined calls, missed calls, messages, and earnings are listed below.",
                 color = TextSubtle,
                 fontSize = 12.sp,
                 lineHeight = 16.sp
@@ -3814,8 +3766,7 @@ private fun HostChatScreen(
     threads: androidx.compose.runtime.snapshots.SnapshotStateList<ChatThread>,
     selectedThreadId: String?,
     onOpenThread: (String) -> Unit,
-    onCloseThread: () -> Unit,
-    onEarnMessage: (Int) -> Unit
+    onCloseThread: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -3870,9 +3821,6 @@ private fun HostChatScreen(
                 lastSeenAtMillis = repliedAt,
                 messages = updatedMessages
             )
-            if (!isSupportThread) {
-                onEarnMessage(HostChatRewardPerIncomingMessageRs)
-            }
         }
     }
 
@@ -3974,8 +3922,32 @@ private fun HostChatScreen(
                             }
                         )
                     }
+                    if (filteredThreads.isEmpty()) {
+                        item { HostEmptyChatState() }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun HostEmptyChatState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 72.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("No chats yet", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Real host chat integration is pending. Demo conversations are hidden.",
+                color = TextSubtle,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -4848,11 +4820,12 @@ private fun HostLog.isAudioCallLog(): Boolean {
 }
 
 private fun HostLog.isCancelledCallLog(): Boolean {
-    return matchesCallStatus("cancel", "cancelled", "canceled")
+    return callStatus.equals("declined", true) || callStatus.equals("canceled", true) || callStatus.equals("cancelled", true) ||
+        matchesCallStatus("cancel", "cancelled", "canceled")
 }
 
 private fun HostLog.isMissedCallLog(): Boolean {
-    return matchesCallStatus("missed", "miss call", "misscall")
+    return callStatus.equals("missed", true) || matchesCallStatus("missed", "miss call", "misscall")
 }
 
 private fun HostLog.matchesCallStatus(vararg keywords: String): Boolean {
@@ -4985,7 +4958,8 @@ private data class HostLog(
     val messageCount: Int,
     val amount: Int,
     val time: String,
-    val createdAt: String
+    val createdAt: String,
+    val callStatus: String
 )
 private data class HostWithdrawalTransaction(
     val id: String,

@@ -38,6 +38,7 @@ data class RemoteWalletTransaction(
     val rechargeAmountRupees: Int = 0,
     val status: String = "completed",
     val counterpartyName: String? = null,
+    val callStatus: String? = null,
     val durationSeconds: Long? = null,
     val messageCount: Int? = null,
     val createdAt: String? = null
@@ -53,6 +54,10 @@ data class RecordWalletTransactionRequest(
     val rechargeAmountRupees: Int = 0,
     val status: String = "completed",
     val counterpartyName: String? = null,
+    val callId: String? = null,
+    val callStatus: String? = null,
+    val counterpartyId: String? = null,
+    val ratePerMinute: Int? = null,
     val durationSeconds: Long? = null,
     val messageCount: Int? = null
 )
@@ -60,4 +65,14 @@ data class RecordWalletTransactionRequest(
 data class RecordWalletTransactionResponse(
     val recorded: Boolean = false,
     val transaction: RemoteWalletTransaction? = null
+)
+
+data class CallEventRequest(
+    val callId: String,
+    val counterpartyId: String,
+    val counterpartyName: String,
+    val kind: String,
+    val status: String,
+    val durationSeconds: Long = 0L,
+    val ratePerMinute: Int = 0
 )

@@ -52,6 +52,7 @@ export async function eligibleHosts(
         hostAudioRate: profile.hostAudioRate,
         hostVideoRate: profile.hostVideoRate,
         hostStatus: profile.hostStatus,
+        hostStories: profile.hostStories,
       };
     });
 }

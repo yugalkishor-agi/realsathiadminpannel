@@ -186,6 +186,7 @@ import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
 import com.incoteam.realsaathi.data.model.auth.RemoteWalletTransaction
 import com.incoteam.realsaathi.data.model.auth.SupportChatMessage
 import com.incoteam.realsaathi.data.model.auth.SupportChatRequest
+import com.incoteam.realsaathi.data.model.auth.DirectChatRequest
 import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
 import com.incoteam.realsaathi.data.repository.AuthRepository
 import com.incoteam.realsaathi.data.repository.CachedAppBanner
@@ -196,6 +197,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -387,7 +389,10 @@ fun RealSaathiHomeApp(
     }
 
     LaunchedEffect(Unit) {
-        loadRemoteDiscoveryHosts()
+        while (isActive) {
+            if (!isHomeRefreshing) loadRemoteDiscoveryHosts()
+            delay(5_000L)
+        }
     }
 
     fun refreshHomeFeed() {
@@ -434,7 +439,7 @@ fun RealSaathiHomeApp(
     }
 }
 
-private const val ChatUnlockMinDurationSeconds = 5L * 60L
+private const val ChatUnlockMinDurationSeconds = 10L * 60L
 private const val ChatUnlockWindowMillis = 7L * 24L * 60L * 60L * 1000L
 private const val FaceMissingCameraTimeoutMillis = 5_000L
 private const val OfflineHostReturnMillis = 10L * 60L * 1000L
@@ -442,7 +447,7 @@ private const val CallLowTimeWarningSeconds = 2L * 60L
 private const val SensitiveChatPlaceholder = "Sensitive message"
 private const val AudioCallRateCoinsPerMinute = 35
 private const val VideoCallRateCoinsPerMinute = 65
-private const val ChatMessageCostCoins = 1
+private const val ChatMessageCostCoins = 2
 
 private data class PendingVoiceNoteDraft(
     val uri: String,
@@ -735,6 +740,8 @@ private fun DiscoveryHost.toHomeUser(): User {
         language = nativeLanguages.firstOrNull().orEmpty().ifBlank { preferredLanguage.ifBlank { "All" } },
         presence = livePresence,
         ratePerMinute = hostAudioRate.takeIf { it > 0 } ?: AudioCallRateCoinsPerMinute,
+        hostAudioLive = hostAudioLive,
+        hostVideoLive = hostVideoLive,
         publicId = publicId,
         hostStories = hostStories
     )
@@ -744,7 +751,8 @@ private fun String.toReportReasonCode(): String {
     val normalized = lowercase(Locale.getDefault())
     return when {
         "harass" in normalized || "abuse" in normalized || "bad" in normalized -> "harassment"
-        "fake" in normalized || "fraud" in normalized -> "fake_profile"
+        "scam" in normalized || "fraud" in normalized || "money" in normalized -> "scam_fraud"
+        "fake" in normalized -> "fake_profile"
         "inappropriate" in normalized || "sexual" in normalized || "nude" in normalized -> "inappropriate_content"
         else -> "other"
     }
@@ -875,6 +883,13 @@ private fun MainScaffold(
     }
     val blockedThreadIds = remember { mutableStateListOf<String>() }
     val callHistoryList = remember { mutableStateListOf<CallHistory>() }
+    LaunchedEffect(Unit) {
+        authRepository.listBlockedUsers(sessionManager.getAccessToken()).onSuccess { response ->
+            val ids = response.blockedUsers.map { it.blockedId }.filter(String::isNotBlank)
+            blockedThreadIds.clear()
+            blockedThreadIds.addAll(ids)
+        }
+    }
     LaunchedEffect(callEvent?.callId, callEvent?.status, callEvent?.durationSeconds) {
         val event = callEvent ?: return@LaunchedEffect
         val isCustomerCall = !sessionManager.isHost()
@@ -885,6 +900,86 @@ private fun MainScaffold(
         mutableStateListOf<ChatThread>().apply {
             add(buildSupportThread())
             add(buildRechargeAssistantThread())
+        }
+    }
+    suspend fun refreshRemoteChatThreads() {
+        val response = authRepository.directChat(
+            sessionManager.getAccessToken(),
+            DirectChatRequest(action = "threads", conversationId = "threads")
+        ).getOrNull() ?: return
+        val ownId = sessionManager.getUserId()
+        response.threads.forEach { remote ->
+            if (remote.conversationId in blockedThreadIds) return@forEach
+            val latest = remote.latestMessage
+            val message = latest?.let { item ->
+                ChatMessage(
+                    id = item.id,
+                    text = item.body,
+                    fromUser = item.senderId == ownId,
+                    timestampMillis = runCatching { Instant.parse(item.createdAt).toEpochMilli() }
+                        .getOrDefault(System.currentTimeMillis())
+                )
+            }
+            val index = chatThreads.indexOfFirst { it.id == remote.conversationId }
+            val current = if (index >= 0) chatThreads[index] else null
+            val updated = (current ?: ChatThread(
+                id = remote.conversationId,
+                title = remote.participantName,
+                subtitle = message?.text ?: "Chat unlocked for 7 days",
+                unreadCount = if (message != null && !message.fromUser) 1 else 0,
+                lastSeenAtMillis = message?.timestampMillis,
+                messages = message?.let(::listOf) ?: emptyList()
+            )).let { thread ->
+                if (message == null) thread else thread.copy(
+                    title = remote.participantName,
+                    subtitle = message.text,
+                    lastSeenAtMillis = message.timestampMillis,
+                    messages = (thread.messages + message).distinctBy { it.id }.takeLast(100)
+                )
+            }
+            if (index >= 0) chatThreads[index] = updated else chatThreads.add(updated)
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            refreshRemoteChatThreads()
+            delay(15_000L)
+        }
+    }
+    LaunchedEffect(callEvent?.callId, callEvent?.status, callEvent?.durationSeconds) {
+        val event = callEvent ?: return@LaunchedEffect
+        if (sessionManager.isHost() || event.status.lowercase(Locale.US) != "completed" ||
+            event.durationSeconds < ChatUnlockMinDurationSeconds
+        ) return@LaunchedEffect
+        delay(1_200L)
+        event.toCallHistory()?.let { addOrUpdateCallHistory(callHistoryList, it) }
+        syncUnlockedChatThreads(chatThreads, callHistoryList, blockedThreadIds.toSet())
+        repeat(3) {
+            val remote = authRepository.directChat(
+                sessionManager.getAccessToken(),
+                DirectChatRequest(action = "history", conversationId = event.counterpartyId)
+            ).getOrNull()?.messages.orEmpty()
+            val index = chatThreads.indexOfFirst { it.id == event.counterpartyId }
+            if (index >= 0 && remote.isNotEmpty()) {
+                val ownId = sessionManager.getUserId()
+                val current = chatThreads[index]
+                val mapped = remote.map { item ->
+                    ChatMessage(
+                        id = item.id, text = item.body, fromUser = item.senderId == ownId,
+                        timestampMillis = runCatching { Instant.parse(item.createdAt).toEpochMilli() }
+                            .getOrDefault(System.currentTimeMillis()),
+                        deliveryStatus = if (item.senderId == ownId) ChatDeliveryStatus.SENT else null
+                    )
+                }
+                chatThreads[index] = current.copy(
+                    subtitle = mapped.last().text,
+                    unreadCount = current.unreadCount.coerceAtLeast(1),
+                    lastSeenAtMillis = mapped.last().timestampMillis,
+                    messages = (current.messages + mapped).distinctBy { it.id }.takeLast(100)
+                )
+                return@LaunchedEffect
+            }
+            delay(1_000L)
         }
     }
     val unreadChatCount = chatThreads
@@ -1092,7 +1187,8 @@ private fun MainScaffold(
                         hideBottomBar = true
                     },
                     onRefreshHosts = onRefreshHome,
-                    onStartCall = onStartCall
+                    onStartCall = onStartCall,
+                    onUserBlocked = { userId -> blockUserEverywhere(userId) }
                 )
                 1 -> CallHistoryScreen(
                     historyList = callHistoryList,
@@ -1223,7 +1319,7 @@ private fun MainScaffold(
                         if (chatUnlocked) {
                             toast(context, "${activeCall.displayLabel()} ka chat 7 days ke liye unlock ho gaya.")
                         } else {
-                            toast(context, "Chat unlock ke liye ${activeCall.displayLabel()} se minimum 5 min call complete karni hogi.")
+                            toast(context, "Chat unlock ke liye ${activeCall.displayLabel()} se minimum 10 min call complete karni hogi.")
                         }
                             onUserReturnedOnline(activeCall.userId)
                             onEndCall()
@@ -1259,6 +1355,71 @@ private fun ChatScreen(
 
     val latestReceiptTime = chatThreads.firstOrNull { it.id == RechargeAssistantId }
         ?.messages?.lastOrNull()?.timestampMillis ?: 0L
+    suspend fun refreshSupportHistory() {
+        val token = sessionManager.getAccessToken().trim()
+        if (token.isBlank()) return
+        val history = authRepository.getSupportHistory(token).getOrNull() ?: return
+        val index = chatThreads.indexOfFirst { it.id == "support" }
+        if (index < 0 || history.messages.isEmpty()) return
+        val remote = history.messages.map { item ->
+            ChatMessage(
+                id = item.id,
+                text = item.body,
+                fromUser = item.senderType == "user",
+                timestampMillis = runCatching { Instant.parse(item.createdAt).toEpochMilli() }.getOrDefault(System.currentTimeMillis()),
+                deliveryStatus = if (item.senderType == "user") ChatDeliveryStatus.SEEN else null
+            )
+        }
+        val current = chatThreads[index]
+        val messages = (current.messages + remote).distinctBy { it.id }.takeLast(100)
+        chatThreads[index] = current.copy(
+            subtitle = messages.lastOrNull()?.text ?: current.subtitle,
+            unreadCount = 0,
+            lastSeenAtMillis = messages.lastOrNull()?.timestampMillis,
+            messages = messages
+        )
+    }
+    LaunchedEffect(selectedThreadId) {
+        if (selectedThreadId == "support") {
+            while (isActive) {
+                refreshSupportHistory()
+                delay(15_000L)
+            }
+        }
+    }
+    suspend fun refreshDirectHistory(threadId: String) {
+        val token = sessionManager.getAccessToken().trim()
+        if (token.isBlank()) return
+        val remote = authRepository.directChat(token, DirectChatRequest(action = "history", conversationId = threadId)).getOrNull()?.messages ?: return
+        val index = chatThreads.indexOfFirst { it.id == threadId }
+        if (index < 0 || remote.isEmpty()) return
+        val ownId = sessionManager.getUserId()
+        val current = chatThreads[index]
+        val mapped = remote.map { item ->
+            ChatMessage(
+                id = item.id,
+                text = item.body,
+                fromUser = item.senderId == ownId,
+                timestampMillis = runCatching { Instant.parse(item.createdAt).toEpochMilli() }.getOrDefault(System.currentTimeMillis()),
+                deliveryStatus = if (item.senderId == ownId) ChatDeliveryStatus.SENT else null
+            )
+        }
+        chatThreads[index] = current.copy(
+            subtitle = mapped.lastOrNull()?.text ?: current.subtitle,
+            unreadCount = if (selectedThreadId == threadId) 0 else current.unreadCount + mapped.count { !it.fromUser },
+            lastSeenAtMillis = mapped.lastOrNull()?.timestampMillis,
+            messages = (current.messages + mapped).distinctBy { it.id }.takeLast(100)
+        )
+    }
+    LaunchedEffect(selectedThreadId) {
+        val threadId = selectedThreadId ?: return@LaunchedEffect
+        if (threadId != "support" && threadId != RechargeAssistantId) {
+            while (isActive) {
+                refreshDirectHistory(threadId)
+                delay(15_000L)
+            }
+        }
+    }
     LaunchedEffect(selectedThreadId, latestReceiptTime) {
         if (selectedThreadId == RechargeAssistantId) {
             markRechargeRead(context, sessionManager.getUserId(), latestReceiptTime)
@@ -1431,7 +1592,6 @@ private fun ChatScreen(
                         toast(context, "Not enough coins")
                         return@ChatConversationScreen false
                     }
-                    coinsState.value -= ChatMessageCostCoins
                 }
                 val sentAt = System.currentTimeMillis()
                 val safeText = sanitizeChatMessage(text, allowSensitive = current.id == "support")
@@ -1451,7 +1611,30 @@ private fun ChatScreen(
                 if (current.id == "support") {
                     queueSupportAiReply(current.id, safeText)
                 } else {
-                    queueAutoReply(current.id)
+                    scope.launch {
+                        val token = sessionManager.getAccessToken().trim()
+                        val result = authRepository.directChat(
+                            token,
+                            DirectChatRequest(conversationId = current.id, recipientId = current.id, message = safeText)
+                        )
+                        val response = result.getOrNull()
+                        if (response == null) {
+                            toast(context, result.exceptionOrNull()?.message ?: "Message send nahi ho paya. Please try again.")
+                        } else {
+                            if (response.chargeApplied) {
+                                coinsState.value = (coinsState.value - ChatMessageCostCoins).coerceAtLeast(0)
+                            }
+                            val index = chatThreads.indexOfFirst { it.id == current.id }
+                            if (index >= 0) {
+                                val latest = chatThreads[index]
+                                chatThreads[index] = latest.copy(
+                                    messages = latest.messages.map { item ->
+                                        if (item.text == safeText && item.fromUser && item.id.startsWith("${current.id}-")) item.copy(id = response.message?.id ?: item.id) else item
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
                 true
             },
@@ -1553,7 +1736,7 @@ private fun ChatScreen(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Support chat top par rahegi. Baaki chats 5 minute ya usse zyada call ke baad unlock hoti hain.",
+                                text = "Support chat top par rahegi. Baaki chats 10 minute ya usse zyada call ke baad unlock hoti hain.",
                                 color = TextSubtle,
                                 fontSize = 12.sp,
                                 lineHeight = 18.sp
@@ -2719,11 +2902,13 @@ private fun HomeScreen(
     isRefreshing: Boolean,
     onWalletClick: () -> Unit,
     onRefreshHosts: () -> Unit,
-    onStartCall: (ActiveCallSession) -> Unit
+    onStartCall: (ActiveCallSession) -> Unit,
+    onUserBlocked: (String) -> Unit
 ) {
     val context = LocalContext.current
     val app = remember(context) { context.applicationContext as RealSaathiApp }
     val authRepository = remember(app) { app.authRepository }
+    val sessionManager = remember(app) { app.sessionManager }
     val coinsState = LocalCoins.current
     val listState = rememberLazyListState()
     var storyFeedClock by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -2740,6 +2925,8 @@ private fun HomeScreen(
     var discoveryLanguages by remember {
         mutableStateOf(UserPrefs.getConfiguredLanguages(context, includeAll = true))
     }
+    val moderationScope = rememberCoroutineScope()
+    var selectedModerationUser by remember { mutableStateOf<User?>(null) }
     val topicFilteredUsers = if (selectedDiscoveryTopic == "All") {
         users.toList()
     } else {
@@ -2841,7 +3028,8 @@ private fun HomeScreen(
                         ) { _, user ->
                             UserCard(
                                 user = user,
-                                onStartCall = onStartCall
+                                onStartCall = onStartCall,
+                                onModerate = { selectedModerationUser = user }
                             )
                         }
                     }
@@ -2856,6 +3044,21 @@ private fun HomeScreen(
                 onStartCall = onStartCall,
                 onStoryViewed = markStoryViewed,
                 onClose = { activeStoryIndex = null }
+            )
+        }
+        selectedModerationUser?.let { user ->
+            BlockReasonDialog(
+                onReasonSelected = { reason ->
+                    selectedModerationUser = null
+                    onUserBlocked(user.id)
+                    moderationScope.launch {
+                        authRepository.reportUser(
+                            sessionManager.getAccessToken(),
+                            ReportUserRequest(user.id, reason.toReportReasonCode(), "discovery", reason, true)
+                        )
+                    }
+                },
+                onDismiss = { selectedModerationUser = null }
             )
         }
     }
@@ -2990,6 +3193,7 @@ private fun RealSaathiSlider(animateSlides: Boolean, banners: List<CachedAppBann
                 slide.imagePath?.let { LocalBannerImage(it, "Home banner", Modifier.fillMaxSize()) }
             }
         }
+
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -3206,12 +3410,11 @@ private fun WalletHeaderCoinsChip(
                 text = "\uD83E\uDE99",
                 fontSize = 13.sp
             )
-            Text(
-                text = myCoins.toString(),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("Wallet", color = TextSubtle, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                Text("${myCoins.coerceAtLeast(0)} coins", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Open wallet", tint = Color.White.copy(alpha = 0.72f), modifier = Modifier.size(14.dp))
         }
     }
 }
@@ -3352,10 +3555,13 @@ private fun HostAvatarPreviewDialog(
 @Composable
 private fun UserCard(
     user: User,
-    onStartCall: (ActiveCallSession) -> Unit
+    onStartCall: (ActiveCallSession) -> Unit,
+    onModerate: () -> Unit
 ) {
     var showAvatarPreview by rememberSaveable(user.id) { mutableStateOf(false) }
-    val isAvailable = user.presence == UserPresence.ONLINE
+    val audioAvailable = user.presence == UserPresence.ONLINE && user.hostAudioLive
+    val videoAvailable = user.presence == UserPresence.ONLINE && user.hostVideoLive
+    val isAvailable = audioAvailable || videoAvailable
     val statusLabel = when (user.presence) {
         UserPresence.ONLINE -> "Online"
         UserPresence.BUSY -> "Busy"
@@ -3374,12 +3580,12 @@ private fun UserCard(
     val unavailableTitle = when (user.presence) {
         UserPresence.BUSY -> "Currently busy on call"
         UserPresence.OFFLINE -> "Currently offline"
-        UserPresence.ONLINE -> ""
+        UserPresence.ONLINE -> "Call options currently unavailable"
     }
     val unavailableSubtitle = when (user.presence) {
         UserPresence.BUSY -> ""
         UserPresence.OFFLINE -> ""
-        UserPresence.ONLINE -> ""
+        UserPresence.ONLINE -> "Audio and video calling are currently turned off."
     }
     val busyDurationText = user.busyForMinutes?.let { "$it min" } ?: "On call"
 
@@ -3436,37 +3642,42 @@ private fun UserCard(
 
         if (isAvailable) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                CallIconButton(
-                    iconPainter = painterResource(id = R.drawable.ic_audio_call_modern),
-                    coinsText = "$AudioCallRateCoinsPerMinute",
-                    modifier = Modifier.weight(1f)
-                ) {
-                    onStartCall(
-                        ActiveCallSession(
-                            userId = user.id,
-                            name = user.name,
-                            publicId = user.publicId,
-                            isVideo = false,
-                            ratePerMinute = AudioCallRateCoinsPerMinute
+                if (audioAvailable) {
+                    CallIconButton(
+                        iconPainter = painterResource(id = R.drawable.ic_audio_call_modern),
+                        coinsText = "$AudioCallRateCoinsPerMinute",
+                        modifier = if (videoAvailable) Modifier.weight(1f) else Modifier.fillMaxWidth()
+                    ) {
+                        onStartCall(
+                            ActiveCallSession(
+                                userId = user.id,
+                                name = user.name,
+                                publicId = user.publicId,
+                                isVideo = false,
+                                ratePerMinute = AudioCallRateCoinsPerMinute
+                            )
                         )
-                    )
+                    }
                 }
-                CallIconButton(
-                    iconPainter = painterResource(id = R.drawable.ic_video_call_modern),
-                    coinsText = "$VideoCallRateCoinsPerMinute",
-                    modifier = Modifier.weight(1f)
-                ) {
-                    onStartCall(
-                        ActiveCallSession(
-                            userId = user.id,
-                            name = user.name,
-                            publicId = user.publicId,
-                            isVideo = true,
-                            ratePerMinute = VideoCallRateCoinsPerMinute
+                if (videoAvailable) {
+                    CallIconButton(
+                        iconPainter = painterResource(id = R.drawable.ic_video_call_modern),
+                        coinsText = "$VideoCallRateCoinsPerMinute",
+                        modifier = if (audioAvailable) Modifier.weight(1f) else Modifier.fillMaxWidth()
+                    ) {
+                        onStartCall(
+                            ActiveCallSession(
+                                userId = user.id,
+                                name = user.name,
+                                publicId = user.publicId,
+                                isVideo = true,
+                                ratePerMinute = VideoCallRateCoinsPerMinute
+                            )
                         )
-                    )
+                    }
                 }
             }
+            Text("Report / Block", color = Accent2, fontSize = 11.sp, modifier = Modifier.clickable { onModerate() })
         } else {
             Box(
                 modifier = Modifier
@@ -4455,7 +4666,7 @@ private fun WalletScreen(
                 ) {
                     WalletHeader(
                         title = "Wallet",
-                        subtitle = null,
+                        subtitle = "Recharge, balance and transactions",
                         onBack = onBack
                     )
                 }
@@ -4473,7 +4684,7 @@ private fun WalletScreen(
                     )
                     Spacer(Modifier.height(18.dp))
                     Text(
-                        text = "Choose a pack",
+                        text = "Recharge wallet",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold

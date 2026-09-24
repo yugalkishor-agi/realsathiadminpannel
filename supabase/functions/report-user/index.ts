@@ -1,6 +1,6 @@
 import { authenticateRequest, corsResponse, createAdminClient, jsonResponse, requestErrorResponse } from "../_shared/auth.ts";
 
-const reasons = new Set(["harassment", "fake_profile", "inappropriate_content", "other"]);
+const reasons = new Set(["scam_fraud", "harassment", "fake_profile", "inappropriate_content", "personal_information", "other"]);
 const contexts = new Set(["call", "chat", "profile", "random_match", "discovery"]);
 
 Deno.serve(async (req) => {
@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
   try {
     const { userId } = await authenticateRequest(req);
     const body = await req.json();
-    const reportedUserId = String(body?.reportedUserId ?? "").trim();
-    if (!reportedUserId || reportedUserId === userId) return jsonResponse({ message: "Choose another user to report." }, 422);
+    const reportedUserId = String(body?.reportedUserId ?? "").trim() || null;
+    if (reportedUserId === userId) return jsonResponse({ message: "Choose another user to report." }, 422);
     const db = createAdminClient();
     const reason = reasons.has(body?.reason) ? body.reason : "other";
     const context = contexts.has(body?.context) ? body.context : "profile";
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     }).select("id").single();
     if (error) throw error;
     let blocked = false;
-    if (body?.block !== false) {
+    if (body?.block !== false && reportedUserId) {
       const blockResult = await db.from("user_blocks").upsert({
         blocker_id: userId, blocked_id: reportedUserId,
       }, { onConflict: "blocker_id,blocked_id" });

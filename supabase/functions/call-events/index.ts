@@ -46,6 +46,15 @@ Deno.serve(async (req) => {
     const client = host.id === current.id ? other : current;
     if (String(host.role ?? "") !== "host") return jsonResponse({ message: "A host participant is required." }, 422);
 
+    if (status === "completed" && durationSeconds > 0) {
+      const { error: accessError } = await db.rpc("record_chat_call_progress", {
+        p_client_id: client.id,
+        p_host_id: host.id,
+        p_duration_seconds: Math.floor(durationSeconds),
+      });
+      if (accessError) throw accessError;
+    }
+
     const rate = Math.max(0, Number(kind === "video_call" ? host.host_video_rate : host.host_audio_rate) || 0);
     const earning = status === "completed" ? billedMinutes(durationSeconds) * rate : 0;
     const eventId = callId || `${zegoId(String(host.id))}-${zegoId(String(client.id))}-${kind}-${status}`;

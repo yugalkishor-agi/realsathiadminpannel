@@ -1,2 +1,8 @@
 [functions.config-banners]
 verify_jwt = false
+
+[functions.support-chat]
+verify_jwt = false
+
+[functions.direct-chat]
+verify_jwt = false

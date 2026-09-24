@@ -2,6 +2,12 @@ package com.incoteam.realsaathi.utils
 
 object PhoneNumberFormatter {
 
+    fun toE164(rawValue: String, dialCode: String): String {
+        val digits = rawValue.filter(Char::isDigit).trimStart('0')
+        val code = dialCode.filter(Char::isDigit)
+        return if (code.isNotBlank() && digits.length in 6..14) "+$code$digits" else ""
+    }
+
     fun toIndianE164(rawValue: String): String {
         val digits = rawValue.filter(Char::isDigit)
         return when {

@@ -17,10 +17,10 @@ class LoginViewModel(
     private val _sendOtpState = MutableLiveData<UiState<SendOtpResponse>>(UiState.Idle)
     val sendOtpState: LiveData<UiState<SendOtpResponse>> = _sendOtpState
 
-    fun sendOtp(rawPhoneNumber: String) {
-        val phoneNumber = PhoneNumberFormatter.toIndianE164(rawPhoneNumber)
+    fun sendOtp(rawPhoneNumber: String, dialCode: String) {
+        val phoneNumber = PhoneNumberFormatter.toE164(rawPhoneNumber, dialCode)
         if (phoneNumber.isBlank()) {
-            _sendOtpState.value = UiState.Error("Enter a valid 10-digit mobile number.")
+            _sendOtpState.value = UiState.Error("Enter a valid mobile number.")
             return
         }
 

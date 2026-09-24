@@ -3,7 +3,11 @@ export const ADMIN_TABLES = [
   { key: 'wallet_ledger', label: 'Wallet ledger', permission: 'wallet', columns: ['id', 'user_id', 'kind', 'title', 'coins_delta', 'rupees_delta', 'status', 'created_at'] },
   { key: 'recharge_orders', label: 'Recharge orders', permission: 'wallet', columns: ['order_id', 'user_id', 'coins', 'amount_rupees', 'status', 'created_at'] },
   { key: 'user_reports', label: 'Reports', permission: 'moderation', columns: ['id', 'reporter_id', 'reported_id', 'reason', 'status', 'created_at'] },
+  { key: 'feedback_messages', label: 'Feedback', permission: 'moderation', columns: ['id', 'user_id', 'role', 'category', 'body', 'status', 'created_at'] },
   { key: 'host_kyc_details', label: 'Host KYC', permission: 'kyc', columns: ['user_id', 'full_name', 'status', 'created_at', 'updated_at'] },
   { key: 'user_blocks', label: 'Blocks', permission: 'moderation', columns: ['id', 'blocker_id', 'blocked_id', 'created_at'] },
   { key: 'recharge_receipts', label: 'Receipts', permission: 'wallet', columns: ['id', 'order_id', 'user_id', 'status', 'amount_rupees', 'created_at'] },
+  { key: 'support_threads', label: 'Support threads', permission: 'support', columns: ['id', 'user_id', 'status', 'subject', 'last_message_at', 'created_at'] },
+  { key: 'support_messages', label: 'Support messages', permission: 'support', columns: ['id', 'thread_id', 'sender_type', 'body', 'created_at'] },
+  { key: 'admin_audit_logs', label: 'Admin audit trail', permission: 'audit', columns: ['id', 'actor_id', 'action', 'entity_type', 'entity_id', 'metadata', 'created_at'] },
 ]

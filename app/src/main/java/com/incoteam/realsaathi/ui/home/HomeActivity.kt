@@ -36,6 +36,9 @@ import com.incoteam.realsaathi.core.network.registerInternetAvailabilityCallback
 import com.incoteam.realsaathi.core.network.unregisterInternetAvailabilityCallback
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.model.auth.CallEventRequest
+import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
+import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
+import com.incoteam.realsaathi.core.calling.IncomingCallInfo
 import com.incoteam.realsaathi.core.ui.StableMobileUi
 import com.incoteam.realsaathi.core.ui.withStableFontScale
 import com.incoteam.realsaathi.ui.auth.login.LoginActivity
@@ -185,6 +188,9 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                     Log.e("RealSaathiCall", "Unable to save call event", error)
                 }
             }
+        }
+        zegoCallManager.setIncomingCallListener { incoming ->
+            if (sessionManager.isHost()) runOnUiThread { showIncomingModerationActions(incoming) }
         }
         lifecycleScope.launch {
             zegoCallManager.initialize()
@@ -370,6 +376,56 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun showIncomingModerationActions(incoming: IncomingCallInfo) {
+        if (isFinishing || isDestroyed) return
+        val caller = incoming.name.ifBlank { "RealSaathi user" }
+        AlertDialog.Builder(this)
+            .setTitle("Incoming call from $caller")
+            .setMessage("You can pick/decline from the call prompt, or take a safety action before answering.")
+            .setNegativeButton("Block") { _, _ ->
+                zegoCallManager.rejectIncomingCallForModeration()
+                lifecycleScope.launch {
+                    (application as RealSaathiApp).authRepository.blockUser(
+                        sessionManager.getAccessToken(), UnblockUserRequest(incoming.userId)
+                    ).onSuccess { Toast.makeText(this@HomeActivity, "Caller blocked", Toast.LENGTH_SHORT).show() }
+                }
+            }
+            .setNeutralButton("Report") { _, _ ->
+                val reasons = arrayOf("Scam / fraud", "Harassment", "Inappropriate behaviour", "Fake profile", "Personal information", "Other")
+                AlertDialog.Builder(this)
+                    .setTitle("Report caller")
+                    .setSingleChoiceItems(reasons, -1) { dialog, which ->
+                        dialog.dismiss()
+                        zegoCallManager.rejectIncomingCallForModeration()
+                        lifecycleScope.launch {
+                            (application as RealSaathiApp).authRepository.reportUser(
+                                sessionManager.getAccessToken(),
+                                ReportUserRequest(
+                                    reportedUserId = incoming.userId,
+                                    reason = incomingReportReasonCode(reasons[which]),
+                                    context = "call",
+                                    note = reasons[which],
+                                    block = true
+                                )
+                            ).onSuccess { Toast.makeText(this@HomeActivity, "Caller reported and blocked", Toast.LENGTH_SHORT).show() }
+                        }
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+            .setPositiveButton("Keep call prompt", null)
+            .show()
+    }
+
+    private fun incomingReportReasonCode(value: String): String = when {
+        value.startsWith("Scam", ignoreCase = true) -> "scam_fraud"
+        value.startsWith("Harassment", ignoreCase = true) -> "harassment"
+        value.startsWith("Inappropriate", ignoreCase = true) -> "inappropriate_content"
+        value.startsWith("Fake", ignoreCase = true) -> "fake_profile"
+        value.startsWith("Personal", ignoreCase = true) -> "personal_information"
+        else -> "other"
     }
 
     private fun startZegoCall(call: ActiveCallSession) {

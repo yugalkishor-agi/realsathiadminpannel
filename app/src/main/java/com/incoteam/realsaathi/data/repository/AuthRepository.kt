@@ -18,15 +18,21 @@ import com.incoteam.realsaathi.data.model.auth.RefreshSessionRequest
 import com.incoteam.realsaathi.data.model.auth.RefreshSessionResponse
 import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
 import com.incoteam.realsaathi.data.model.auth.ReportUserResponse
+import com.incoteam.realsaathi.data.model.auth.SubmitFeedbackRequest
+import com.incoteam.realsaathi.data.model.auth.SubmitFeedbackResponse
 import com.incoteam.realsaathi.data.model.auth.SendOtpRequest
 import com.incoteam.realsaathi.data.model.auth.SendOtpResponse
 import com.incoteam.realsaathi.data.model.auth.SaveHostSettingsRequest
 import com.incoteam.realsaathi.data.model.auth.SaveProfileRequest
 import com.incoteam.realsaathi.data.model.auth.SupportChatRequest
 import com.incoteam.realsaathi.data.model.auth.SupportChatResponse
+import com.incoteam.realsaathi.data.model.auth.DirectChatRequest
+import com.incoteam.realsaathi.data.model.auth.DirectChatResponse
 import com.incoteam.realsaathi.data.model.auth.TopicTagsResponse
 import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
 import com.incoteam.realsaathi.data.model.auth.UnblockUserResponse
+import com.incoteam.realsaathi.data.model.auth.BlockedUsersResponse
+import com.incoteam.realsaathi.data.model.auth.UserReportsResponse
 import com.incoteam.realsaathi.data.model.auth.UploadHostMediaResponse
 import com.incoteam.realsaathi.data.model.auth.UserProfileResponse
 import com.incoteam.realsaathi.data.model.auth.VerifyOtpRequest
@@ -137,6 +143,17 @@ class AuthRepository(
         Unit
     }
 
+    suspend fun submitFeedback(
+        accessToken: String,
+        request: SubmitFeedbackRequest
+    ): Result<SubmitFeedbackResponse> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to save feedback right now.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.SUBMIT_FEEDBACK_URL) { url ->
+                authApiService.submitFeedback(url, sessionToken(activeToken), request)
+            }
+        }
+    }
+
     suspend fun sendSupportChat(
         accessToken: String,
         request: SupportChatRequest
@@ -151,6 +168,22 @@ class AuthRepository(
                     sessionToken = sessionToken(activeToken),
                     request = request
                 )
+            }
+        }
+    }
+
+    suspend fun getSupportHistory(accessToken: String): Result<SupportChatResponse> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to load support history right now.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.SUPPORT_CHAT_URL) { url ->
+                authApiService.supportChat(url, sessionToken(activeToken), SupportChatRequest(action = "history"))
+            }
+        }
+    }
+
+    suspend fun directChat(accessToken: String, request: DirectChatRequest): Result<DirectChatResponse> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to send chat message right now.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.DIRECT_CHAT_URL) { url ->
+                authApiService.directChat(url, sessionToken(activeToken), request)
             }
         }
     }
@@ -249,6 +282,17 @@ class AuthRepository(
         }
     }
 
+    suspend fun blockUser(
+        accessToken: String,
+        request: UnblockUserRequest
+    ): Result<UnblockUserResponse> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to block user right now.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.BLOCK_USER_URL) { url ->
+                authApiService.blockUser(url, sessionToken(activeToken), request)
+            }
+        }
+    }
+
     suspend fun unblockUser(
         accessToken: String,
         request: UnblockUserRequest
@@ -263,6 +307,22 @@ class AuthRepository(
                     sessionToken = sessionToken(activeToken),
                     request = request
                 )
+            }
+        }
+    }
+
+    suspend fun listBlockedUsers(accessToken: String): Result<BlockedUsersResponse> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to load blocked users right now.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.LIST_BLOCKED_USERS_URL) { url ->
+                authApiService.listBlockedUsers(url, sessionToken(activeToken))
+            }
+        }
+    }
+
+    suspend fun listUserReports(accessToken: String): Result<UserReportsResponse> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to load reports right now.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.LIST_USER_REPORTS_URL) { url ->
+                authApiService.listUserReports(url, sessionToken(activeToken))
             }
         }
     }

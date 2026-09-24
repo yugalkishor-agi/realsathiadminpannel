@@ -13,12 +13,18 @@ import com.incoteam.realsaathi.data.model.auth.CallEventRequest
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionResponse
 import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
 import com.incoteam.realsaathi.data.model.auth.ReportUserResponse
+import com.incoteam.realsaathi.data.model.auth.SubmitFeedbackRequest
+import com.incoteam.realsaathi.data.model.auth.SubmitFeedbackResponse
 import com.incoteam.realsaathi.data.model.auth.SaveHostSettingsRequest
 import com.incoteam.realsaathi.data.model.auth.SaveProfileRequest
 import com.incoteam.realsaathi.data.model.auth.SupportChatRequest
 import com.incoteam.realsaathi.data.model.auth.SupportChatResponse
+import com.incoteam.realsaathi.data.model.auth.DirectChatRequest
+import com.incoteam.realsaathi.data.model.auth.DirectChatResponse
 import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
 import com.incoteam.realsaathi.data.model.auth.UnblockUserResponse
+import com.incoteam.realsaathi.data.model.auth.BlockedUsersResponse
+import com.incoteam.realsaathi.data.model.auth.UserReportsResponse
 import com.incoteam.realsaathi.data.model.auth.HostDashboardResponse
 import com.incoteam.realsaathi.data.model.auth.HostKycRequest
 import com.incoteam.realsaathi.data.model.auth.HostKycResponse
@@ -81,11 +87,25 @@ interface AuthApiService {
     ): Response<Map<String, Boolean>>
 
     @POST
+    suspend fun submitFeedback(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String,
+        @Body request: SubmitFeedbackRequest
+    ): Response<SubmitFeedbackResponse>
+
+    @POST
     suspend fun supportChat(
         @Url url: String,
         @Header("X-Session-Token") sessionToken: String,
         @Body request: SupportChatRequest
     ): Response<SupportChatResponse>
+
+    @POST
+    suspend fun directChat(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String,
+        @Body request: DirectChatRequest
+    ): Response<DirectChatResponse>
 
     @GET
     suspend fun getTopicTags(
@@ -121,11 +141,30 @@ interface AuthApiService {
     ): Response<ReportUserResponse>
 
     @POST
+    suspend fun blockUser(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String,
+        @Body request: UnblockUserRequest
+    ): Response<UnblockUserResponse>
+
+    @POST
     suspend fun unblockUser(
         @Url url: String,
         @Header("X-Session-Token") sessionToken: String,
         @Body request: UnblockUserRequest
     ): Response<UnblockUserResponse>
+
+    @POST
+    suspend fun listBlockedUsers(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String
+    ): Response<BlockedUsersResponse>
+
+    @POST
+    suspend fun listUserReports(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String
+    ): Response<UserReportsResponse>
 
     @GET
     suspend fun getWalletSummary(

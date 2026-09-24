@@ -36,6 +36,9 @@ import com.incoteam.realsaathi.ui.home.HomeActivity
 import com.incoteam.realsaathi.ui.home.NoInternetBlockingScreen
 import com.incoteam.realsaathi.ui.theme.RealSaathiTheme
 import com.incoteam.realsaathi.utils.PhoneNumberFormatter
+import com.incoteam.realsaathi.utils.CountryCode
+import com.incoteam.realsaathi.utils.CountryCodes
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class LoginActivity : AppCompatActivity() {
 
@@ -46,6 +49,7 @@ class LoginActivity : AppCompatActivity() {
     private var isInternetAvailableNow = false
     private var isSendOtpLoading = false
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var selectedCountry: CountryCode = CountryCodes.all.first()
 
     private val viewModel: LoginViewModel by viewModels {
         AuthViewModelFactory((application as RealSaathiApp).authRepository)
@@ -92,6 +96,7 @@ class LoginActivity : AppCompatActivity() {
         window.navigationBarColor = Color.TRANSPARENT
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.textCountryCode.text = "${selectedCountry.dialCode}  ▾"
         AuthLayoutTuner.apply(
             root = binding.root,
             contentContainer = binding.contentContainer,
@@ -117,6 +122,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.buttonSendOtp.setOnClickListener { submitPhoneNumber() }
+        binding.textCountryCode.setOnClickListener { showCountryPicker() }
         binding.textTermsLink.setOnClickListener {
             openExternalPage("https://realsaathi.in/terms.html")
         }
@@ -230,14 +236,29 @@ class LoginActivity : AppCompatActivity() {
             return
         }
         val rawPhoneNumber = binding.editPhone.text?.toString().orEmpty()
-        val phoneNumber = PhoneNumberFormatter.toIndianE164(rawPhoneNumber)
+        val phoneNumber = PhoneNumberFormatter.toE164(rawPhoneNumber, selectedCountry.dialCode)
         if (phoneNumber.isBlank()) {
             showPhoneMessage(getString(R.string.validation_invalid_phone), isError = true)
             return
         }
 
         pendingPhoneNumber = phoneNumber
-        viewModel.sendOtp(phoneNumber)
+        viewModel.sendOtp(rawPhoneNumber, selectedCountry.dialCode)
+    }
+
+    private fun showCountryPicker() {
+        val labels = CountryCodes.all.map { "${it.name}  ${it.dialCode}" }.toTypedArray()
+        val selectedIndex = CountryCodes.all.indexOf(selectedCountry).coerceAtLeast(0)
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Select country code")
+            .setSingleChoiceItems(labels, selectedIndex) { dialog, which ->
+                selectedCountry = CountryCodes.all[which]
+                binding.textCountryCode.text = "${selectedCountry.dialCode}  ▾"
+                dialog.dismiss()
+                showPhoneMessage(getString(R.string.login_number_note), isError = false)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun openOtpScreen(phoneNumber: String, requestId: String) {

@@ -71,6 +71,8 @@ data class User(
     val language: String,
     val presence: UserPresence,
     val ratePerMinute: Int,
+    val hostAudioLive: Boolean = false,
+    val hostVideoLive: Boolean = false,
     val busyForMinutes: Int? = null,
     val publicId: String? = null,
     val hostStories: List<RemoteHostStory> = emptyList()

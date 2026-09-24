@@ -101,6 +101,9 @@ import com.incoteam.realsaathi.RealSaathiApp
 import com.incoteam.realsaathi.R
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.model.auth.SaveProfileRequest
+import com.incoteam.realsaathi.data.model.auth.SubmitFeedbackRequest
+import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
+import com.incoteam.realsaathi.data.model.auth.UserReportEntry
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -361,12 +364,15 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun FeedbackScreen(
+internal fun FeedbackScreen(
     sessionManager: SessionManager,
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
     val context = LocalContext.current
+    val app = remember(context) { context.applicationContext as RealSaathiApp }
+    val authRepository = remember(app) { app.authRepository }
+    val scope = rememberCoroutineScope()
     val nickname = safeProfileValue(UserPrefs.getNickname(context), "realsaathi_user")
     val phone = safeProfileValue(sessionManager.getPhoneNumber(), "Not added")
     val categories = remember {
@@ -374,6 +380,7 @@ private fun FeedbackScreen(
     }
     var selectedCategory by rememberSaveable { mutableStateOf(categories.first()) }
     var feedbackText by rememberSaveable { mutableStateOf("") }
+    var isSubmitting by rememberSaveable { mutableStateOf(false) }
     val trimmedFeedback = feedbackText.trim()
     val minimumFeedbackLength = 12
     val isFeedbackValid = trimmedFeedback.length >= minimumFeedbackLength
@@ -414,6 +421,26 @@ private fun FeedbackScreen(
                 )
             }
             safeStartActivity(context, intent, "No email app found")
+        }
+    }
+
+    val saveFeedback: () -> Unit = {
+        if (!isFeedbackValid || isSubmitting) {
+            if (!isFeedbackValid) toast(context, "Please write proper feedback")
+        } else {
+            isSubmitting = true
+            scope.launch {
+                authRepository.submitFeedback(
+                    sessionManager.getAccessToken(),
+                    SubmitFeedbackRequest(selectedCategory, trimmedFeedback)
+                ).onSuccess {
+                    feedbackText = ""
+                    toast(context, "Feedback saved. Thank you!")
+                }.onFailure {
+                    toast(context, it.message ?: "Feedback save nahi ho paya")
+                }
+                isSubmitting = false
+            }
         }
     }
 
@@ -487,11 +514,11 @@ private fun FeedbackScreen(
         }
         Spacer(Modifier.height(18.dp))
         SupportSubmitRow(
-            primaryText = "Send on WhatsApp",
-            secondaryText = "Send via email",
-            enabled = isFeedbackValid,
-            onPrimaryClick = sendFeedbackOnWhatsApp,
-            onSecondaryClick = sendFeedbackOnEmail
+            primaryText = if (isSubmitting) "Saving feedback…" else "Save feedback",
+            secondaryText = "Also send on WhatsApp",
+            enabled = isFeedbackValid && !isSubmitting,
+            onPrimaryClick = saveFeedback,
+            onSecondaryClick = sendFeedbackOnWhatsApp
         )
         Spacer(Modifier.height(14.dp))
         Box(
@@ -591,6 +618,14 @@ private fun SupportInfoCard(
     }
 }
 
+private fun String.reportStatusLabel(): String = when (lowercase()) {
+    "resolved", "closed" -> "Closed"
+    "in_review" -> "In review"
+    else -> "Active"
+}
+
+private fun String.reportReasonLabel(): String = replace('_', ' ').replaceFirstChar { it.uppercase() }
+
 @Composable
 private fun ReportsScreen(
     sessionManager: SessionManager,
@@ -598,6 +633,9 @@ private fun ReportsScreen(
 ) {
     BackHandler { onBack() }
     val context = LocalContext.current
+    val app = remember(context) { context.applicationContext as RealSaathiApp }
+    val authRepository = remember(app) { app.authRepository }
+    val scope = rememberCoroutineScope()
     val nickname = safeProfileValue(UserPrefs.getNickname(context), "realsaathi_user")
     val phone = safeProfileValue(sessionManager.getPhoneNumber(), "Not added")
     val reportTypes = remember {
@@ -606,6 +644,13 @@ private fun ReportsScreen(
     var selectedType by rememberSaveable { mutableStateOf(reportTypes.first()) }
     var reportedProfile by rememberSaveable { mutableStateOf("") }
     var reportDetails by rememberSaveable { mutableStateOf("") }
+    var isSubmitting by rememberSaveable { mutableStateOf(false) }
+    var submittedReports by remember { mutableStateOf<List<UserReportEntry>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        authRepository.listUserReports(sessionManager.getAccessToken())
+            .onSuccess { submittedReports = it.reports }
+    }
 
     val submitReportEmail = {
         if (reportDetails.trim().length < 10) {
@@ -648,6 +693,33 @@ private fun ReportsScreen(
         }
     }
 
+    val saveReport: () -> Unit = {
+        if (reportDetails.trim().length < 10 || isSubmitting) {
+            if (reportDetails.trim().length < 10) toast(context, "Please add full report details")
+        } else {
+            isSubmitting = true
+            val reason = when (selectedType) {
+                "Host behaviour" -> "harassment"
+                "Fake profile" -> "fake_profile"
+                "Chat issue" -> "inappropriate_content"
+                else -> "other"
+            }
+            val targetId = reportedProfile.trim().takeIf { it.matches(Regex("[0-9a-fA-F-]{36}")) }.orEmpty()
+            scope.launch {
+                authRepository.reportUser(
+                    sessionManager.getAccessToken(),
+                    ReportUserRequest(targetId, reason, "profile", reportDetails.trim(), false)
+                ).onSuccess {
+                    reportDetails = ""
+                    toast(context, "Report saved. Our team will review it.")
+                }.onFailure {
+                    toast(context, it.message ?: "Report save nahi ho paya")
+                }
+                isSubmitting = false
+            }
+        }
+    }
+
     ProfilePageScaffold(title = "Reports", onBack = onBack) {
         Spacer(Modifier.height(10.dp))
         Spacer(Modifier.height(20.dp))
@@ -655,6 +727,22 @@ private fun ReportsScreen(
             title = "Submit a report",
             subtitle = "Share the issue clearly so the support team can review it faster."
         )
+        if (submittedReports.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text("Your report cases", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Spacer(Modifier.height(8.dp))
+            submittedReports.forEach { report ->
+                SupportInfoCard(
+                    title = "Case ${report.id}",
+                    rows = listOf(
+                        "Status" to report.status.reportStatusLabel(),
+                        "Reason" to report.reason.reportReasonLabel(),
+                        "Target" to (report.profile?.username ?: report.reportedId ?: "Support")
+                    )
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
         Spacer(Modifier.height(16.dp))
         SupportInfoCard(
             title = "Support details attached",
@@ -714,10 +802,11 @@ private fun ReportsScreen(
         )
         Spacer(Modifier.height(18.dp))
         SupportSubmitRow(
-            primaryText = "Report on WhatsApp",
-            secondaryText = "Report via email",
-            onPrimaryClick = submitReportWhatsApp,
-            onSecondaryClick = submitReportEmail
+            primaryText = if (isSubmitting) "Saving report…" else "Save report",
+            secondaryText = "Also send on WhatsApp",
+            enabled = reportDetails.trim().length >= 10 && !isSubmitting,
+            onPrimaryClick = saveReport,
+            onSecondaryClick = submitReportWhatsApp
         )
         Spacer(Modifier.height(12.dp))
         Text(

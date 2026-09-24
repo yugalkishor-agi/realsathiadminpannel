@@ -167,6 +167,15 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createAdminClient();
+    if (deviceId) {
+      const { data: bannedDevice, error: bannedDeviceError } = await supabase
+        .from("banned_devices")
+        .select("id")
+        .eq("device_id", deviceId)
+        .maybeSingle();
+      if (bannedDeviceError) return jsonResponse({ message: bannedDeviceError.message }, 500);
+      if (bannedDevice) return jsonResponse({ message: "This device is not allowed to access the app." }, 403);
+    }
     const { data: otpRequest, error: otpError } = await supabase
       .from("otp_codes")
       .select("*")

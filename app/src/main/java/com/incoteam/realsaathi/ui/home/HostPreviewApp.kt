@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Base64
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -56,6 +57,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.CheckCircle
@@ -67,8 +69,10 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayCircleFilled
+import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.AlertDialog
@@ -128,6 +132,8 @@ import com.incoteam.realsaathi.data.model.auth.HostKycRequest
 import com.incoteam.realsaathi.data.model.auth.RemoteWalletTransaction
 import com.incoteam.realsaathi.data.model.auth.SaveHostSettingsRequest
 import com.incoteam.realsaathi.data.model.auth.SaveProfileRequest
+import com.incoteam.realsaathi.data.model.auth.DirectChatRequest
+import com.incoteam.realsaathi.data.model.auth.UnblockUserRequest
 import com.incoteam.realsaathi.data.repository.AuthRepository
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -694,15 +700,16 @@ fun HostPreviewApp(
                         logs = logs,
                         onBack = { hostProfileScreen = null }
                     )
-                    "settings" -> HostInfoScreen(
-                        title = "Account Settings",
-                        rows = listOf(
-                            "Blocked users" to "Manage from customer settings",
-                            "Live controls" to "Available on host dashboard",
-                            "Profile" to "Use Edit Profile",
-                            "Delete account" to "Support-assisted in this build"
-                        ),
-                        onBack = { hostProfileScreen = null }
+                    "settings" -> HostAccountSettingsScreen(
+                        sessionManager = sessionManager,
+                        authRepository = authRepository,
+                        onBack = { hostProfileScreen = null },
+                        onFeedback = { hostProfileScreen = "feedback" },
+                        onDeleted = onLogout
+                    )
+                    "feedback" -> FeedbackScreen(
+                        sessionManager = sessionManager,
+                        onBack = { hostProfileScreen = "settings" }
                     )
                     "help" -> HostInfoScreen(
                         title = "Help & Support",
@@ -738,6 +745,8 @@ fun HostPreviewApp(
             } else if (tab == 2) {
                 HostChatScreen(
                     threads = chatThreads,
+                    authRepository = authRepository,
+                    sessionManager = sessionManager,
                     selectedThreadId = selectedChatThreadId,
                     onOpenThread = { threadId -> selectedChatThreadId = threadId },
                     onCloseThread = { selectedChatThreadId = null }
@@ -856,6 +865,80 @@ private fun HostProfileHome(
         Spacer(Modifier.height(20.dp))
         HostProductFooter()
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun HostAccountSettingsScreen(
+    sessionManager: SessionManager,
+    authRepository: AuthRepository,
+    onBack: () -> Unit,
+    onFeedback: () -> Unit,
+    onDeleted: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var blockedUsers by remember { mutableStateOf(emptyList<com.incoteam.realsaathi.data.model.auth.BlockedUserEntry>()) }
+    var reportCases by remember { mutableStateOf(emptyList<com.incoteam.realsaathi.data.model.auth.UserReportEntry>()) }
+    var isProcessing by rememberSaveable { mutableStateOf(false) }
+
+    BackHandler(enabled = !isProcessing) { onBack() }
+
+    LaunchedEffect(Unit) {
+        authRepository.listBlockedUsers(sessionManager.getAccessToken())
+            .onSuccess { blockedUsers = it.blockedUsers }
+        authRepository.listUserReports(sessionManager.getAccessToken())
+            .onSuccess { reportCases = it.reports }
+    }
+
+    ProfilePageScaffold(title = "Account Settings", onBack = onBack) {
+        Spacer(Modifier.height(10.dp))
+        Text("Safety and moderation", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Block ya report options call, chat, aur available profiles ke context me milenge.", color = TextSubtle, fontSize = 12.sp)
+        Spacer(Modifier.height(16.dp))
+        Text("Blocked users", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        Spacer(Modifier.height(8.dp))
+        if (blockedUsers.isEmpty()) Text("No blocked users.", color = TextSubtle, fontSize = 13.sp)
+        blockedUsers.forEach { entry ->
+            val label = entry.profile?.username ?: entry.profile?.publicId ?: entry.blockedId.take(8)
+            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(label, color = Color.White, modifier = Modifier.weight(1f))
+                TextButton(enabled = !isProcessing, onClick = {
+                    isProcessing = true
+                    scope.launch {
+                        authRepository.unblockUser(sessionManager.getAccessToken(), UnblockUserRequest(entry.blockedId))
+                            .onSuccess { blockedUsers = blockedUsers.filterNot { it.blockedId == entry.blockedId }; toast(context, "User unblocked") }
+                            .onFailure { toast(context, it.message ?: "Unblock nahi ho paya") }
+                        isProcessing = false
+                    }
+                }) { Text("Unblock") }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Text("Report cases", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        Spacer(Modifier.height(8.dp))
+        if (reportCases.isEmpty()) Text("No report cases.", color = TextSubtle, fontSize = 13.sp)
+        reportCases.take(8).forEach { report ->
+            HostCard {
+                Text("Case ${report.id} · ${report.status.replace('_', ' ').replaceFirstChar { it.uppercase() }}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text("${report.reason.replace('_', ' ')} · ${report.profile?.username ?: report.reportedId ?: "Support"}", color = TextSubtle, fontSize = 12.sp)
+            }
+            Spacer(Modifier.height(6.dp))
+        }
+        Spacer(Modifier.height(12.dp))
+        HostProfileItem(text = "Feedback", onClick = onFeedback)
+        Spacer(Modifier.height(28.dp))
+        HostProfileItem(text = "Delete Account", danger = true, onClick = {
+            if (!isProcessing) {
+                scope.launch {
+                    isProcessing = true
+                    authRepository.deleteAccount(sessionManager.getAccessToken()).onSuccess { onDeleted() }
+                        .onFailure { toast(context, it.message ?: "Account delete nahi ho paya") }
+                    isProcessing = false
+                }
+            }
+        })
     }
 }
 
@@ -3020,10 +3103,11 @@ private suspend fun loadBitmapFromSource(
 private fun HostProfileItem(
     text: String,
     danger: Boolean = false,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
             .background(CardBg)
@@ -3764,13 +3848,89 @@ private fun HostLogCard(log: HostLog) {
 @Composable
 private fun HostChatScreen(
     threads: androidx.compose.runtime.snapshots.SnapshotStateList<ChatThread>,
+    authRepository: AuthRepository,
+    sessionManager: SessionManager,
     selectedThreadId: String?,
     onOpenThread: (String) -> Unit,
     onCloseThread: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val selectedIndex = threads.indexOfFirst { it.id == selectedThreadId }
+
+    suspend fun refreshRemoteThreads() {
+        val response = authRepository.directChat(
+            sessionManager.getAccessToken(),
+            DirectChatRequest(action = "threads", conversationId = "threads")
+        ).getOrNull() ?: return
+        val ownId = sessionManager.getUserId()
+        response.threads.forEach { remote ->
+            val latest = remote.latestMessage ?: return@forEach
+            val message = ChatMessage(
+                id = latest.id,
+                text = latest.body,
+                fromUser = latest.senderId == ownId,
+                timestampMillis = runCatching { java.time.Instant.parse(latest.createdAt).toEpochMilli() }
+                    .getOrDefault(System.currentTimeMillis())
+            )
+            val index = threads.indexOfFirst { it.id == remote.participantId }
+            val updated = (if (index >= 0) threads[index] else ChatThread(
+                id = remote.participantId,
+                title = remote.participantName,
+                subtitle = message.text,
+                unreadCount = if (message.fromUser) 0 else 1,
+                lastSeenAtMillis = message.timestampMillis,
+                messages = listOf(message)
+            )).copy(
+                title = remote.participantName,
+                subtitle = message.text,
+                lastSeenAtMillis = message.timestampMillis,
+                messages = (if (index >= 0) threads[index].messages else emptyList())
+                    .plus(message).distinctBy { it.id }.takeLast(100)
+            )
+            if (index >= 0) threads[index] = updated else threads.add(updated)
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            refreshRemoteThreads()
+            delay(15_000L)
+        }
+    }
+
+    suspend fun refreshHistory(threadId: String) {
+        val token = sessionManager.getAccessToken().trim()
+        if (token.isBlank()) return
+        val conversationId = if (sessionManager.isHost()) sessionManager.getUserId() else threadId
+        val remote = authRepository.directChat(token, DirectChatRequest(action = "history", conversationId = conversationId)).getOrNull()?.messages ?: return
+        val index = threads.indexOfFirst { it.id == threadId }
+        if (index < 0 || remote.isEmpty()) return
+        val ownId = sessionManager.getUserId()
+        val current = threads[index]
+        val mapped = remote.map { item ->
+            ChatMessage(
+                id = item.id,
+                text = item.body,
+                fromUser = item.senderId == ownId,
+                timestampMillis = runCatching { java.time.Instant.parse(item.createdAt).toEpochMilli() }.getOrDefault(System.currentTimeMillis()),
+                deliveryStatus = if (item.senderId == ownId) ChatDeliveryStatus.SENT else null
+            )
+        }
+        threads[index] = current.copy(
+            subtitle = mapped.lastOrNull()?.text ?: current.subtitle,
+            unreadCount = if (selectedThreadId == threadId) 0 else current.unreadCount + mapped.count { !it.fromUser },
+            lastSeenAtMillis = mapped.lastOrNull()?.timestampMillis,
+            messages = (current.messages + mapped).distinctBy { it.id }.takeLast(100)
+        )
+    }
+    LaunchedEffect(selectedThreadId) {
+        val threadId = selectedThreadId ?: return@LaunchedEffect
+        while (isActive) {
+            refreshHistory(threadId)
+            delay(15_000L)
+        }
+    }
 
     fun queueIncomingReply(threadId: String, isSupportThread: Boolean) {
         scope.launch {
@@ -3804,16 +3964,6 @@ private fun HostChatScreen(
                         timestampMillis = repliedAt
                     )
                 )
-                if (!isSupportThread) {
-                    add(
-                        ChatMessage(
-                            id = "${refreshed.id}-$repliedAt-earned",
-                            text = "You earned ₹$HostChatRewardPerIncomingMessageRs from this message.",
-                            fromUser = false,
-                            timestampMillis = repliedAt + 1L
-                        )
-                    )
-                }
             }
             threads[refreshedIndex] = refreshed.copy(
                 subtitle = reply,
@@ -3828,6 +3978,24 @@ private fun HostChatScreen(
         HostChatConversationScreen(
             thread = threads[selectedIndex],
             onBack = onCloseThread,
+            onModerate = { reason ->
+                val target = threads[selectedIndex].id
+                scope.launch {
+                    authRepository.reportUser(
+                        sessionManager.getAccessToken(),
+                        com.incoteam.realsaathi.data.model.auth.ReportUserRequest(
+                            reportedUserId = target,
+                            reason = reason.hostReportReasonCode(),
+                            context = "chat",
+                            note = reason,
+                            block = true
+                        )
+                    ).onSuccess {
+                        threads.removeAll { it.id == target }
+                        onCloseThread()
+                    }.onFailure { Toast.makeText(context, it.message ?: "Report nahi ho paya", Toast.LENGTH_SHORT).show() }
+                }
+            },
             onSendMessage = { text ->
                 val current = threads[selectedIndex]
                 val safeText = text.trim()
@@ -3844,7 +4012,28 @@ private fun HostChatScreen(
                         deliveryStatus = ChatDeliveryStatus.SENT
                     )
                 )
-                queueIncomingReply(current.id, current.id == HostSupportThreadId)
+                scope.launch {
+                    val token = sessionManager.getAccessToken().trim()
+                    val response = authRepository.directChat(
+                        token,
+                        DirectChatRequest(
+                            conversationId = sessionManager.getUserId(),
+                            recipientId = current.id,
+                            message = safeText
+                        )
+                    ).getOrNull()
+                    if (response == null) {
+                        Toast.makeText(context, "Message send nahi ho paya. Please try again.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val index = threads.indexOfFirst { it.id == current.id }
+                        if (index >= 0) {
+                            val latest = threads[index]
+                            threads[index] = latest.copy(messages = latest.messages.map { item ->
+                                if (item.text == safeText && item.fromUser && item.id.endsWith("-host")) item.copy(id = response.message?.id ?: item.id) else item
+                            })
+                        }
+                    }
+                }
                 true
             }
         )
@@ -4033,8 +4222,10 @@ private fun HostChatThreadRow(
 private fun HostChatConversationScreen(
     thread: ChatThread,
     onBack: () -> Unit,
+    onModerate: (String) -> Unit,
     onSendMessage: (String) -> Boolean
 ) {
+    var showModerationDialog by rememberSaveable(thread.id) { mutableStateOf(false) }
     var message by rememberSaveable(thread.id) { mutableStateOf("") }
     val messageListState = rememberLazyListState()
     val lastOutgoingMessageId = remember(thread.messages) {
@@ -4102,6 +4293,9 @@ private fun HostChatConversationScreen(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                }
+                if (!thread.isPinned) {
+                    Text("Block / Report", color = Accent2, fontSize = 11.sp, modifier = Modifier.clickable { showModerationDialog = true })
                 }
             }
             Box(
@@ -4202,7 +4396,22 @@ private fun HostChatConversationScreen(
                 }
             }
         }
+        if (showModerationDialog) {
+            BlockReasonDialog(
+                onReasonSelected = { reason -> showModerationDialog = false; onModerate(reason) },
+                onDismiss = { showModerationDialog = false }
+            )
+        }
     }
+}
+
+private fun String.hostReportReasonCode(): String = when {
+    contains("scam", true) || contains("fraud", true) || contains("money", true) -> "scam_fraud"
+    contains("harass", true) || contains("abuse", true) -> "harassment"
+    contains("fake", true) -> "fake_profile"
+    contains("inappropriate", true) -> "inappropriate_content"
+    contains("personal", true) -> "personal_information"
+    else -> "other"
 }
 
 @Composable
@@ -4349,7 +4558,6 @@ private fun HostSupportChatAvatar(size: Dp, modifier: Modifier = Modifier) {
 }
 
 private const val HostSupportThreadId = "support"
-private const val HostChatRewardPerIncomingMessageRs = 1
 private val HostMaxContentWidth = 360.dp
 
 private fun Modifier.hostContentWidth(): Modifier =
@@ -4459,12 +4667,6 @@ private fun buildInitialHostChatThreads(now: Long = System.currentTimeMillis()):
                     fromUser = false,
                     timestampMillis = aishaReplyAt
                 ),
-                ChatMessage(
-                    id = "host-aisha-earned",
-                    text = "You earned ₹$HostChatRewardPerIncomingMessageRs from this message.",
-                    fromUser = false,
-                    timestampMillis = aishaReplyAt + 1L
-                )
             )
         ),
         ChatThread(
@@ -4489,12 +4691,6 @@ private fun buildInitialHostChatThreads(now: Long = System.currentTimeMillis()):
                     fromUser = false,
                     timestampMillis = meeraReplyAt
                 ),
-                ChatMessage(
-                    id = "host-meera-earned",
-                    text = "You earned ₹$HostChatRewardPerIncomingMessageRs from this message.",
-                    fromUser = false,
-                    timestampMillis = meeraReplyAt + 1L
-                )
             )
         ),
         ChatThread(
@@ -4519,12 +4715,6 @@ private fun buildInitialHostChatThreads(now: Long = System.currentTimeMillis()):
                     fromUser = false,
                     timestampMillis = sanaReplyAt
                 ),
-                ChatMessage(
-                    id = "host-sana-earned",
-                    text = "You earned ₹$HostChatRewardPerIncomingMessageRs from this message.",
-                    fromUser = false,
-                    timestampMillis = sanaReplyAt + 1L
-                )
             )
         ),
         ChatThread(
@@ -4549,12 +4739,6 @@ private fun buildInitialHostChatThreads(now: Long = System.currentTimeMillis()):
                     fromUser = false,
                     timestampMillis = rheaReplyAt
                 ),
-                ChatMessage(
-                    id = "host-rhea-earned",
-                    text = "You earned ₹$HostChatRewardPerIncomingMessageRs from this message.",
-                    fromUser = false,
-                    timestampMillis = rheaReplyAt + 1L
-                )
             )
         )
     )

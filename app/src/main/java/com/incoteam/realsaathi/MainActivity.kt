@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -274,11 +275,11 @@ private fun RealSaathiAnimatedSplash() {
                 )
             }
     ) {
-        val stageHeight = minOf(maxHeight * 0.66f, maxWidth * 1.4f)
-        val logoSize = minOf(maxWidth * 0.86f, stageHeight * 0.90f)
-        val manWidth = stageHeight * 0.60f
-        val womanWidth = stageHeight * 0.67f
-        val characterSeparation = stageHeight * 0.17f
+        val stageHeight = minOf(maxHeight * 0.76f, maxWidth * 1.72f)
+        val logoSize = minOf(maxWidth * 0.88f, stageHeight * 0.82f)
+        val manWidth = stageHeight * 0.70f
+        val womanWidth = stageHeight * 0.75f
+        val characterSeparation = stageHeight * 0.12f
         val entryDistance = maxWidth * 0.75f
 
         Column(
@@ -323,6 +324,7 @@ private fun RealSaathiAnimatedSplash() {
                     Image(
                         painter = painterResource(id = R.drawable.splash_man),
                         contentDescription = null,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .width(manWidth)
@@ -337,6 +339,7 @@ private fun RealSaathiAnimatedSplash() {
                     Image(
                         painter = painterResource(id = R.drawable.splash_woman),
                         contentDescription = null,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .width(womanWidth)

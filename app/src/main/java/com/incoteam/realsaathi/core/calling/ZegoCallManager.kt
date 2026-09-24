@@ -39,9 +39,22 @@ class ZegoCallManager(
     private var pendingIncomingCall: PendingIncomingCall? = null
     private var activeCall: TrackedCall? = null
     private var callEventListener: ((CallLifecycleEvent) -> Unit)? = null
+    private var incomingCallListener: ((IncomingCallInfo) -> Unit)? = null
 
     fun setCallEventListener(listener: ((CallLifecycleEvent) -> Unit)?) {
         callEventListener = listener
+    }
+
+    fun setIncomingCallListener(listener: ((IncomingCallInfo) -> Unit)?) {
+        incomingCallListener = listener
+    }
+
+    fun rejectIncomingCallForModeration() {
+        pendingIncomingCall?.let {
+            emitEvent(it, "declined", 0L)
+            pendingIncomingCall = null
+            runCatching { ZegoUIKitPrebuiltCallService.endCall() }
+        }
     }
 
     suspend fun initialize(): Result<Unit> = runCatching {
@@ -199,12 +212,14 @@ class ZegoCallManager(
             type: ZegoCallType,
             invitees: MutableList<ZegoCallUser>
         ) {
-            pendingIncomingCall = PendingIncomingCall(
+            val incoming = PendingIncomingCall(
                 callId = callID,
                 userId = caller.id,
                 name = caller.name,
                 isVideo = type == ZegoCallType.VIDEO_CALL
             )
+            pendingIncomingCall = incoming
+            incomingCallListener?.invoke(IncomingCallInfo(incoming.callId, incoming.userId, incoming.name, incoming.isVideo))
         }
 
         override fun onIncomingCallCanceled(callID: String, caller: ZegoCallUser) {
@@ -375,6 +390,13 @@ data class CallLifecycleEvent(
     val status: String,
     val durationSeconds: Long,
     val ratePerMinute: Int
+)
+
+data class IncomingCallInfo(
+    val callId: String,
+    val userId: String,
+    val name: String,
+    val isVideo: Boolean
 )
 
 private data class PendingIncomingCall(

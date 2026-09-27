@@ -127,6 +127,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.incoteam.realsaathi.RealSaathiApp
 import com.incoteam.realsaathi.R
+import com.incoteam.realsaathi.core.calling.CallLifecycleEvent
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.model.auth.HostKycRequest
 import com.incoteam.realsaathi.data.model.auth.RemoteWalletTransaction
@@ -158,6 +159,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun HostPreviewApp(
     sessionManager: SessionManager,
+    callEvent: CallLifecycleEvent?,
     onLogout: () -> Unit,
     onExitApp: () -> Unit,
     onSwitchToCustomerMode: () -> Unit,
@@ -208,6 +210,9 @@ fun HostPreviewApp(
     var totalEarnings by rememberSaveable { mutableStateOf(0) }
     var walletBalance by rememberSaveable { mutableStateOf(0) }
     var todayEarnings by rememberSaveable { mutableStateOf(0) }
+    var hostRank by rememberSaveable { mutableStateOf("starter") }
+    var hostTotalCallMinutes by rememberSaveable { mutableStateOf(0) }
+    var hostSharePercent by rememberSaveable { mutableStateOf(25.0) }
     var pendingCapture by remember { mutableStateOf<PendingHostCapture?>(null) }
     var switchingToCustomerMode by remember { mutableStateOf(false) }
     val isLive = audioLive || videoLive
@@ -232,6 +237,9 @@ fun HostPreviewApp(
         videoLive = profile.hostVideoLive
         audioRate = profile.hostAudioRate
         videoRate = profile.hostVideoRate
+        hostRank = profile.hostRank
+        hostTotalCallMinutes = profile.hostTotalCallMinutes
+        hostSharePercent = profile.hostSharePercent
         hostProfilePhotoUri = profile.hostProfilePhotoUrl.orEmpty()
         val syncedStories = profile.hostStories.orEmpty().map { it.toUploadedHostStory() }
         if (storyUploads.toList() != syncedStories) {
@@ -421,6 +429,15 @@ fun HostPreviewApp(
 
     LaunchedEffect(tab) {
         if (tab == 1) refreshHostDashboard(showErrors = false)
+    }
+
+    LaunchedEffect(callEvent?.callId, callEvent?.status, callEvent?.durationSeconds) {
+        val event = callEvent ?: return@LaunchedEffect
+        if (event.status.lowercase(Locale.US) !in setOf("completed", "declined", "canceled", "cancelled", "missed")) {
+            return@LaunchedEffect
+        }
+        delay(1_200L)
+        refreshHostDashboard(showErrors = false)
     }
 
     LaunchedEffect(showWallet) {
@@ -755,6 +772,9 @@ fun HostPreviewApp(
                 HostProfileHome(
                     hostName = hostName,
                     profilePhotoUri = hostProfilePhotoUri,
+                    hostRank = hostRank,
+                    hostTotalCallMinutes = hostTotalCallMinutes,
+                    hostSharePercent = hostSharePercent,
                     onEditProfile = { showHostEditProfile = true },
                     onKyc = { hostProfileScreen = "kyc" },
                     onWallet = { showWallet = true },
@@ -836,6 +856,9 @@ fun HostPreviewApp(
 private fun HostProfileHome(
     hostName: String,
     profilePhotoUri: String,
+    hostRank: String,
+    hostTotalCallMinutes: Int,
+    hostSharePercent: Double,
     onEditProfile: () -> Unit,
     onKyc: () -> Unit,
     onWallet: () -> Unit,
@@ -848,6 +871,9 @@ private fun HostProfileHome(
         HostProfileOverviewCard(
             hostName = hostName,
             profilePhotoUri = profilePhotoUri,
+            hostRank = hostRank,
+            hostTotalCallMinutes = hostTotalCallMinutes,
+            hostSharePercent = hostSharePercent,
             onEditProfile = onEditProfile
         )
         Spacer(Modifier.height(28.dp))
@@ -2816,6 +2842,9 @@ private fun HostEarningsChip(walletBalance: Int, onClick: () -> Unit) {
 private fun HostProfileOverviewCard(
     hostName: String,
     profilePhotoUri: String,
+    hostRank: String,
+    hostTotalCallMinutes: Int,
+    hostSharePercent: Double,
     onEditProfile: () -> Unit
 ) {
     val context = LocalContext.current
@@ -2865,6 +2894,12 @@ private fun HostProfileOverviewCard(
                     .padding(8.dp)
             )
         }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "${hostRank.replaceFirstChar { it.uppercase() }} · $hostTotalCallMinutes call minutes",
+            color = TextSubtle,
+            fontSize = 12.sp
+        )
     }
 }
 
@@ -4386,7 +4421,7 @@ private fun HostChatConversationScreen(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
+            Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Send message",
                             tint = if (canSend) Color.White else Color.White.copy(alpha = 0.42f),

@@ -172,6 +172,9 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
         }
         zegoCallManager.setCallEventListener { event ->
             latestCallEvent = event
+            if (event.endedBecauseBalance && !sessionManager.isHost()) {
+                runOnUiThread { showNoBalanceAfterCallAlert() }
+            }
             lifecycleScope.launch {
                 (application as RealSaathiApp).authRepository.recordCallEvent(
                     accessToken = sessionManager.getAccessToken(),
@@ -181,11 +184,21 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                         counterpartyName = event.counterpartyName,
                         kind = if (event.isVideo) "video_call" else "audio_call",
                         status = event.status,
-                        durationSeconds = event.durationSeconds,
-                        ratePerMinute = event.ratePerMinute
+                        durationSeconds = event.durationSeconds
                     )
-                ).onFailure { error ->
-                    Log.e("RealSaathiCall", "Unable to save call event", error)
+                ).onSuccess { response ->
+                    Log.i(
+                        "RealSaathiCall",
+                        "Call event recorded: callId=${event.callId}, status=${event.status}, " +
+                            "duration=${event.durationSeconds}, recorded=${response.recorded}"
+                    )
+                }.onFailure { error ->
+                    Log.e(
+                        "RealSaathiCall",
+                        "Unable to save call event: callId=${event.callId}, status=${event.status}, " +
+                            "duration=${event.durationSeconds}",
+                        error
+                    )
                 }
             }
         }
@@ -323,6 +336,7 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                     } else if (sessionManager.isHost()) {
                         HostPreviewApp(
                             sessionManager = sessionManager,
+                            callEvent = latestCallEvent,
                             onLogout = {
                                 updateActiveCallSession(null)
                                 zegoCallManager.uninitialize()
@@ -375,6 +389,15 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                 finish()
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showNoBalanceAfterCallAlert() {
+        if (isFinishing || isDestroyed) return
+        AlertDialog.Builder(this)
+            .setTitle("No balance left")
+            .setMessage("Your call time is over because your coin balance is finished. Recharge coins to continue calling.")
+            .setPositiveButton("OK", null)
             .show()
     }
 

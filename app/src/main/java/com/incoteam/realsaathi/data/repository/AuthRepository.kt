@@ -11,7 +11,6 @@ import com.incoteam.realsaathi.data.model.auth.HostKycResponse
 import com.incoteam.realsaathi.data.model.auth.LanguagesResponse
 import com.incoteam.realsaathi.data.model.auth.RandomMatchRequest
 import com.incoteam.realsaathi.data.model.auth.RandomMatchResponse
-import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
 import com.incoteam.realsaathi.data.model.auth.CallEventRequest
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionResponse
 import com.incoteam.realsaathi.data.model.auth.RefreshSessionRequest
@@ -355,24 +354,6 @@ class AuthRepository(
             }
         }
 
-    suspend fun recordWalletTransaction(
-        accessToken: String,
-        request: RecordWalletTransactionRequest
-    ): Result<RecordWalletTransactionResponse> = runCatching {
-        executeProtectedRequest(
-            accessToken = accessToken,
-            fallbackMessage = "Unable to record wallet transaction right now."
-        ) { activeToken ->
-            executeWithConfiguredEndpoint(BuildConfig.RECORD_WALLET_TRANSACTION_URL) { url ->
-                authApiService.recordWalletTransaction(
-                    url = url,
-                    sessionToken = sessionToken(activeToken),
-                    request = request
-                )
-            }
-        }
-    }
-
     suspend fun recordCallEvent(
         accessToken: String,
         request: CallEventRequest
@@ -518,7 +499,7 @@ class AuthRepository(
             return initialResponse.body() ?: throw IllegalStateException("Empty response from server.")
         }
 
-        val initialError = parseError(initialResponse.errorBody()?.string(), fallbackMessage)
+        val initialError = parseResponseError(initialResponse, fallbackMessage)
         if (!shouldRefreshSession(initialError)) {
             if (shouldLogoutOnAccessFailure(initialError)) sessionManager.logout()
             throw IllegalStateException(initialError)
@@ -531,7 +512,7 @@ class AuthRepository(
             return retryResponse.body() ?: throw IllegalStateException("Empty response from server.")
         }
 
-        val retryError = parseError(retryResponse.errorBody()?.string(), fallbackMessage)
+        val retryError = parseResponseError(retryResponse, fallbackMessage)
         if (shouldLogoutOnAccessFailure(retryError)) sessionManager.logout()
         throw IllegalStateException(retryError)
     }
@@ -577,7 +558,17 @@ class AuthRepository(
             return fallbackMessage
         }
         return runCatching {
-            gson.fromJson(rawBody, ApiErrorResponse::class.java)?.message
-        }.getOrNull().orEmpty().ifBlank { fallbackMessage }
+            val payload = gson.fromJson(rawBody, ApiErrorResponse::class.java)
+            payload?.message
+                ?.takeIf { it.isNotBlank() }
+                ?: runCatching {
+                    gson.fromJson(rawBody, Map::class.java)["error"]?.toString()
+                }.getOrNull()
+        }.getOrNull().orEmpty().ifBlank { rawBody.take(240) }
+    }
+
+    private fun <T> parseResponseError(response: Response<T>, fallbackMessage: String): String {
+        val detail = parseError(response.errorBody()?.string(), fallbackMessage)
+        return "$detail (HTTP ${response.code()})"
     }
 }

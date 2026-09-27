@@ -2,6 +2,8 @@ package com.incoteam.realsaathi.core.calling
 
 import android.app.Activity
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.repository.AuthRepository
 import com.incoteam.realsaathi.ui.home.ActiveCallSession
@@ -38,6 +40,12 @@ class ZegoCallManager(
     private var pendingOutgoingCall: ActiveCallSession? = null
     private var pendingIncomingCall: PendingIncomingCall? = null
     private var activeCall: TrackedCall? = null
+    private var endedBecauseBalance = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val endBalanceLimitedCall = Runnable {
+        endedBecauseBalance = true
+        endCall()
+    }
     private var callEventListener: ((CallLifecycleEvent) -> Unit)? = null
     private var incomingCallListener: ((IncomingCallInfo) -> Unit)? = null
 
@@ -105,6 +113,11 @@ class ZegoCallManager(
             return
         }
 
+        if (activeCall != null || pendingOutgoingCall != null || pendingIncomingCall != null) {
+            onFailure("A call is already active. End it before starting another call.")
+            return
+        }
+
         val inviteeId = toZegoUserId(call.userId)
         if (inviteeId.isBlank()) {
             onFailure("This user cannot receive calls right now.")
@@ -138,6 +151,7 @@ class ZegoCallManager(
     }
 
     fun uninitialize() {
+        mainHandler.removeCallbacks(endBalanceLimitedCall)
         if (initializedUserId.isNotBlank()) {
             ZegoUIKitPrebuiltCallService.unInit()
             initializedUserId = ""
@@ -145,6 +159,7 @@ class ZegoCallManager(
         pendingOutgoingCall = null
         pendingIncomingCall = null
         activeCall = null
+        endedBecauseBalance = false
     }
 
     private fun invitationConfig() = ZegoUIKitPrebuiltCallInvitationConfig().apply {
@@ -201,8 +216,20 @@ class ZegoCallManager(
     }
 
     fun endCall() {
+        mainHandler.removeCallbacks(endBalanceLimitedCall)
         runCatching { ZegoUIKitPrebuiltCallService.endCall() }
         finishTrackedCall()
+    }
+
+    private fun scheduleBalanceLimit(tracked: TrackedCall) {
+        mainHandler.removeCallbacks(endBalanceLimitedCall)
+        val allowedSeconds = tracked.includedSecondsAtStart ?: return
+        val elapsedMillis = (System.currentTimeMillis() - tracked.startedAtMillis).coerceAtLeast(0L)
+        val allowedMillis = allowedSeconds.coerceAtMost(Long.MAX_VALUE / 1000L) * 1000L
+        mainHandler.postDelayed(
+            endBalanceLimitedCall,
+            (allowedMillis - elapsedMillis).coerceAtLeast(0L)
+        )
     }
 
     private fun invitationListener() = object : ZegoInvitationCallListener {
@@ -238,14 +265,18 @@ class ZegoCallManager(
 
         override fun onOutgoingCallAccepted(callID: String, callee: ZegoCallUser) {
             pendingOutgoingCall?.let { call ->
-                activeCall = TrackedCall(
+                latestCallDurationSeconds = 0L
+                val tracked = TrackedCall(
                     callId = callID,
                     userId = call.userId,
                     name = call.name.ifBlank { callee.name },
                     isVideo = call.isVideo,
                     ratePerMinute = call.ratePerMinute,
+                    includedSecondsAtStart = call.includedSecondsAtStart,
                     startedAtMillis = System.currentTimeMillis()
                 )
+                activeCall = tracked
+                scheduleBalanceLimit(tracked)
                 pendingOutgoingCall = null
             }
         }
@@ -283,12 +314,14 @@ class ZegoCallManager(
 
         override fun onIncomingCallAcceptButtonPressed() {
             pendingIncomingCall?.let {
+                latestCallDurationSeconds = 0L
                 activeCall = TrackedCall(
                     callId = it.callId,
                     userId = it.userId,
                     name = it.name,
                     isVideo = it.isVideo,
                     ratePerMinute = 0,
+                    includedSecondsAtStart = null,
                     startedAtMillis = System.currentTimeMillis()
                 )
                 pendingIncomingCall = null
@@ -330,7 +363,7 @@ class ZegoCallManager(
         call: ActiveCallSession,
         status: String,
         durationSeconds: Long,
-        callId: String = pendingOutgoingCall?.let { "" } ?: "",
+        callId: String = "local-${System.currentTimeMillis()}-${call.userId.takeLast(8)}",
         counterpartyId: String = call.userId,
         counterpartyName: String = call.name
     ) {
@@ -356,12 +389,14 @@ class ZegoCallManager(
                 isVideo = call.isVideo,
                 status = status,
                 durationSeconds = durationSeconds,
-                ratePerMinute = call.ratePerMinute
+                ratePerMinute = call.ratePerMinute,
+                endedBecauseBalance = endedBecauseBalance
             )
         )
     }
 
     private fun finishTrackedCall() {
+        mainHandler.removeCallbacks(endBalanceLimitedCall)
         val tracked = activeCall ?: return
         val elapsedSeconds = ((System.currentTimeMillis() - tracked.startedAtMillis) / 1000L)
             .coerceAtLeast(1L)
@@ -370,6 +405,7 @@ class ZegoCallManager(
         pendingIncomingCall = null
         pendingOutgoingCall = null
         latestCallDurationSeconds = 0L
+        endedBecauseBalance = false
     }
 
     companion object {
@@ -389,7 +425,8 @@ data class CallLifecycleEvent(
     val isVideo: Boolean,
     val status: String,
     val durationSeconds: Long,
-    val ratePerMinute: Int
+    val ratePerMinute: Int,
+    val endedBecauseBalance: Boolean = false
 )
 
 data class IncomingCallInfo(
@@ -412,5 +449,6 @@ private data class TrackedCall(
     val name: String,
     val isVideo: Boolean,
     val ratePerMinute: Int,
+    val includedSecondsAtStart: Long?,
     val startedAtMillis: Long
 )

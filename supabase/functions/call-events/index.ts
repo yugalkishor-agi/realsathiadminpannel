@@ -1,10 +1,23 @@
-import { authenticateRequest, corsResponse, createAdminClient, jsonResponse, requestErrorResponse } from "../_shared/auth.ts";
+import { authenticateRequest, corsResponse, createAdminClient, jsonResponse } from "../_shared/auth.ts";
 
 const zegoId = (value: string) => value.replace(/[^A-Za-z0-9_]/g, "");
 const safeStatus = new Set(["completed", "declined", "canceled", "missed"]);
 
-function billedMinutes(seconds: number) {
-  return Math.max(1, Math.ceil(Math.max(0, seconds) / 60));
+function describeError(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const value = error as Record<string, unknown>;
+    const fields = ["message", "details", "hint", "code"]
+      .map((key) => value[key] == null ? "" : `${key}=${String(value[key])}`)
+      .filter(Boolean);
+    if (fields.length > 0) return fields.join("; ");
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return "Unknown object error.";
+    }
+  }
+  return String(error || "Unknown call event error.");
 }
 
 Deno.serve(async (req) => {
@@ -29,14 +42,14 @@ Deno.serve(async (req) => {
       participantIds.push(counterpartyId);
     }
     const { data: users, error: usersError } = await db.from("users")
-      .select("id,username,role,host_audio_rate,host_video_rate")
+      .select("id,username,role")
       .in("id", participantIds);
     if (usersError) throw usersError;
     const current = (users ?? []).find((row) => String(row.id) === userId);
     let other = (users ?? []).find((row) => String(row.id) === counterpartyId);
     if (!other) {
       const { data: candidates, error: candidatesError } = await db.from("users")
-        .select("id,username,role,host_audio_rate,host_video_rate");
+        .select("id,username,role");
       if (candidatesError) throw candidatesError;
       other = (candidates ?? []).find((row) => zegoId(String(row.id)) === counterpartyId);
     }
@@ -52,43 +65,28 @@ Deno.serve(async (req) => {
         p_host_id: host.id,
         p_duration_seconds: Math.floor(durationSeconds),
       });
-      if (accessError) throw accessError;
+      if (accessError) {
+        console.error("record_chat_call_progress failed; continuing call billing", accessError);
+      }
     }
 
-    const rate = Math.max(0, Number(kind === "video_call" ? host.host_video_rate : host.host_audio_rate) || 0);
-    const earning = status === "completed" ? billedMinutes(durationSeconds) * rate : 0;
     const eventId = callId || `${zegoId(String(host.id))}-${zegoId(String(client.id))}-${kind}-${status}`;
-    const { data: existing, error: existingError } = await db.from("wallet_ledger")
-      .select("*").contains("metadata", { callId: eventId }).in("user_id", [current.id, other.id]);
-    if (existingError) throw existingError;
-    const existingUsers = new Set((existing ?? []).map((row) => String(row.user_id)));
-    const hostStatus = current.id === host.id ? status : (status === "declined" ? "canceled" : status);
-    const clientStatus = current.id === client.id ? status : (status === "declined" ? "declined" : status);
-    const rows = [];
-    if (!existingUsers.has(String(host.id))) rows.push({
-      user_id: host.id, kind, title: counterpartyName || "Caller",
-      detail: `${kind === "video_call" ? "Video" : "Audio"} call ${hostStatus}`,
-      amount_text: earning > 0 ? `+₹${earning}` : "₹0", coins_delta: 0,
-      rupees_delta: earning, metadata: { callId: eventId, callStatus: hostStatus,
-        counterpartyName, counterpartyId: client.id, durationSeconds, ratePerMinute: rate }
+    const { data: billing, error: billingError } = await db.rpc("record_call_billing", {
+      p_call_id: eventId,
+      p_client_id: client.id,
+      p_host_id: host.id,
+      p_kind: kind,
+      p_status: status,
+      p_duration_seconds: Math.floor(durationSeconds),
     });
-    if (!existingUsers.has(String(client.id))) rows.push({
-      user_id: client.id, kind, title: String(host.username ?? "Host"),
-      detail: `${kind === "video_call" ? "Video" : "Audio"} call ${clientStatus}`,
-      amount_text: earning > 0 ? `-${earning}` : "₹0", coins_delta: earning > 0 ? -earning : 0,
-      rupees_delta: 0, metadata: { callId: eventId, callStatus: clientStatus,
-        counterpartyName: String(host.username ?? "Host"), counterpartyId: host.id,
-        durationSeconds, ratePerMinute: rate }
-    });
-    if (rows.length) {
-      const { error } = await db.from("wallet_ledger").insert(rows);
-      if (error) throw error;
-    }
-    const currentRow = (await db.from("wallet_ledger").select("*").eq("user_id", userId)
-      .contains("metadata", { callId: eventId }).limit(1)).data?.[0] ?? null;
-    return jsonResponse({ recorded: true, transaction: currentRow });
+    if (billingError) throw billingError;
+    return jsonResponse({ recorded: Boolean(billing?.recorded), billing });
   } catch (error) {
     console.error("call-events error", error);
-    return requestErrorResponse(error, "Unable to record call activity right now.");
+    const detail = describeError(error);
+    return jsonResponse({
+      message: `Unable to record call activity: ${detail}`,
+      code: "CALL_EVENT_RECORD_FAILED",
+    }, 500);
   }
 });

@@ -555,7 +555,7 @@ object UserPrefs {
 
     fun getHostAudioRate(ctx: Context): Int {
         return ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-            .getInt(KEY_HOST_AUDIO_RATE, 35)
+            .getInt(KEY_HOST_AUDIO_RATE, 20)
     }
 
     fun saveHostVideoRate(ctx: Context, rupeesPerMinute: Int) {
@@ -567,7 +567,7 @@ object UserPrefs {
 
     fun getHostVideoRate(ctx: Context): Int {
         return ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-            .getInt(KEY_HOST_VIDEO_RATE, 65)
+            .getInt(KEY_HOST_VIDEO_RATE, 60)
     }
 
     fun saveHostDisplayName(ctx: Context, displayName: String) {

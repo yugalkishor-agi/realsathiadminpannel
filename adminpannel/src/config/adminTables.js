@@ -1,6 +1,7 @@
 export const ADMIN_TABLES = [
   { key: 'users', label: 'Users', permission: 'users', columns: ['id', 'public_id', 'phone', 'username', 'role', 'account_status', 'host_status', 'created_at'] },
   { key: 'wallet_ledger', label: 'Wallet ledger', permission: 'wallet', columns: ['id', 'user_id', 'kind', 'title', 'coins_delta', 'rupees_delta', 'status', 'created_at'] },
+  { key: 'system_earnings', label: 'System earnings', permission: 'wallet', columns: ['id', 'call_id', 'kind', 'gross_charge_rupees', 'host_earning_rupees', 'system_earning_rupees', 'host_rank', 'share_percent', 'created_at'] },
   { key: 'recharge_orders', label: 'Recharge orders', permission: 'wallet', columns: ['order_id', 'user_id', 'coins', 'amount_rupees', 'status', 'created_at'] },
   { key: 'user_reports', label: 'Reports', permission: 'moderation', columns: ['id', 'reporter_id', 'reported_id', 'reason', 'status', 'created_at'] },
   { key: 'feedback_messages', label: 'Feedback', permission: 'moderation', columns: ['id', 'user_id', 'role', 'category', 'body', 'status', 'created_at'] },

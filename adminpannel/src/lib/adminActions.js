@@ -7,6 +7,14 @@ export async function recordAudit(action, entityType, entityId, metadata = {}) {
   await supabase.rpc('admin_record_audit', { p_action: action, p_entity_type: entityType, p_entity_id: entityId, p_metadata: metadata })
 }
 
+export function adminCreditWallet(userId, coins, reason) {
+  return supabase.rpc('admin_credit_wallet', {
+    p_user_id: userId,
+    p_coins: coins,
+    p_reason: reason
+  })
+}
+
 export async function setAdminUserStatus(userId, status, reason = '') {
   const rpc = await supabase.rpc('admin_set_user_status', { p_user_id: userId, p_status: status, p_reason: reason })
   if (!rpc.error || !functionMissing(rpc.error)) return rpc

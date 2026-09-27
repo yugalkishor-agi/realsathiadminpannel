@@ -15,7 +15,7 @@ This folder contains the Edge Functions used by the Android app in `supabase_edg
 - `config-tags`, `config-languages`
 - `discovery-hosts`, `random-match`
 - `report-user`, `unblock-user`
-- `wallet-summary`, `record-wallet-transaction`
+- `wallet-summary`
 - `host-kyc`
 - `delete-account`
 - `zego-token` issues short-lived ZEGOCLOUD Token04 credentials for the signed-in user.
@@ -57,7 +57,6 @@ supabase functions deploy random-match --no-verify-jwt
 supabase functions deploy report-user --no-verify-jwt
 supabase functions deploy unblock-user --no-verify-jwt
 supabase functions deploy wallet-summary --no-verify-jwt
-supabase functions deploy record-wallet-transaction --no-verify-jwt
 supabase functions deploy host-kyc --no-verify-jwt
 supabase functions deploy delete-account --no-verify-jwt
 ```

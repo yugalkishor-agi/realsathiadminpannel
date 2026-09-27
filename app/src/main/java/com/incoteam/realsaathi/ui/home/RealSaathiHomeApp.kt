@@ -180,7 +180,6 @@ import com.incoteam.realsaathi.RealSaathiApp
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.core.calling.CallLifecycleEvent
 import com.incoteam.realsaathi.data.model.auth.DiscoveryHost
-import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
 import com.incoteam.realsaathi.data.model.auth.RechargeOrderRequest
 import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
 import com.incoteam.realsaathi.data.model.auth.RemoteWalletTransaction
@@ -417,8 +416,21 @@ fun RealSaathiHomeApp(
     }
 
 
+    val startCallWithBalanceGuard: (ActiveCallSession) -> Unit = { call ->
+        val requiredCoins = if (call.isVideo) VideoCallRateCoinsPerMinute else AudioCallRateCoinsPerMinute
+        val affordableMinutes = coinsState.value.coerceAtLeast(0) / requiredCoins
+        if (affordableMinutes < 1) {
+            toast(context, "Not enough coins. Audio calls need 20 coins/min and video calls need 60 coins/min.")
+        } else {
+            onStartCall(call.copy(
+                ratePerMinute = requiredCoins,
+                includedSecondsAtStart = affordableMinutes.toLong() * 60L
+            ))
+        }
+    }
+
     CompositionLocalProvider(LocalCoins provides coinsState) {
-        val startCallWithSharedLogic: (ActiveCallSession) -> Unit = onStartCall
+        val startCallWithSharedLogic: (ActiveCallSession) -> Unit = startCallWithBalanceGuard
         MainScaffold(
             sessionManager = sessionManager,
             homeUsers = homeUsers,
@@ -445,8 +457,8 @@ private const val FaceMissingCameraTimeoutMillis = 5_000L
 private const val OfflineHostReturnMillis = 10L * 60L * 1000L
 private const val CallLowTimeWarningSeconds = 2L * 60L
 private const val SensitiveChatPlaceholder = "Sensitive message"
-private const val AudioCallRateCoinsPerMinute = 35
-private const val VideoCallRateCoinsPerMinute = 65
+private const val AudioCallRateCoinsPerMinute = 20
+private const val VideoCallRateCoinsPerMinute = 60
 private const val ChatMessageCostCoins = 2
 
 private data class PendingVoiceNoteDraft(
@@ -463,12 +475,6 @@ private fun computeCallAllowanceSeconds(availableCoins: Int, ratePerMinute: Int)
     return ((availableCoins.toLong() * 60L) / ratePerMinute).coerceAtLeast(60L)
 }
 
-
-private fun estimateCallCoins(durationSeconds: Long, ratePerMinute: Int): Int {
-    if (durationSeconds <= 0L || ratePerMinute <= 0) return 0
-    val billedMinutes = ((durationSeconds + 59L) / 60L).coerceAtLeast(1L)
-    return (billedMinutes * ratePerMinute).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-}
 
 private val PhoneSharePattern = Regex("""(?<!\d)(?:\+?\d[\d\s\-]{7,}\d)(?!\d)""")
 private val SocialSharePattern = Regex(
@@ -1016,59 +1022,6 @@ private fun MainScaffold(
         syncUnlockedChatThreads(chatThreads, callHistoryList, blockedThreadIds.toSet())
     }
 
-    fun recordCompletedCallTransaction(
-        call: ActiveCallSession,
-        durationSeconds: Long,
-        totalCoins: Int
-    ) {
-        if (totalCoins <= 0) return
-        val ratePerMinute = call.ratePerMinute.takeIf { it > 0 }
-            ?: resolveCallRatePerMinute(call.userId, call.isVideo)
-        val remainingCharge = (totalCoins - ratePerMinute.coerceAtLeast(0)).coerceAtLeast(0)
-        if (remainingCharge > 0) {
-            coinsState.value = (coinsState.value - remainingCharge).coerceAtLeast(0)
-        }
-
-        val transaction = WalletTransactionEntry(
-            iconRes = if (call.isVideo) R.drawable.ic_video_call_modern else R.drawable.ic_audio_call_modern,
-            title = call.displayLabel(),
-            detail = "${if (call.isVideo) "Video" else "Audio"} call completed",
-            amountText = "-$totalCoins",
-            positive = false,
-            kind = if (call.isVideo) WalletTransactionKind.VIDEO_CALL else WalletTransactionKind.AUDIO_CALL,
-            timestampMillis = System.currentTimeMillis(),
-            coinsDelta = -totalCoins,
-            counterpartyName = call.displayLabel(),
-            durationSeconds = durationSeconds,
-            syncStatus = WalletSyncStatus.PENDING
-        )
-        walletTransactions.add(0, transaction)
-
-        scope.launch {
-            val synced = authRepository.recordWalletTransaction(
-                accessToken = sessionManager.getAccessToken(),
-                request = transaction.toRecordWalletTransactionRequest()
-            ).map { it.recorded }.getOrDefault(false)
-            val transactionIndex = walletTransactions.indexOfFirst { item ->
-                item.timestampMillis == transaction.timestampMillis &&
-                    item.kind == transaction.kind &&
-                    item.coinsDelta == transaction.coinsDelta &&
-                    item.counterpartyName == transaction.counterpartyName
-            }
-            if (transactionIndex >= 0) {
-                walletTransactions[transactionIndex] = transaction.copy(
-                    syncStatus = if (synced) WalletSyncStatus.SYNCED else WalletSyncStatus.FAILED,
-                    detail = if (synced) {
-                        transaction.detail
-                    } else {
-                        "${transaction.detail}. Backend ledger sync failed."
-                    }
-                )
-            }
-        }
-    }
-
-
     LaunchedEffect(Unit) {
         syncUnlockedChatThreads(chatThreads, callHistoryList, blockedThreadIds.toSet())
     }
@@ -1298,12 +1251,6 @@ private fun MainScaffold(
                     LiveCallSurface(
                         activeCall = activeCall,
                         onEndCall = { durationSeconds ->
-                            val callCoins = estimateCallCoins(
-                                durationSeconds = durationSeconds,
-                                ratePerMinute = activeCall.ratePerMinute.takeIf { it > 0 }
-                                    ?: resolveCallRatePerMinute(activeCall.userId, activeCall.isVideo)
-                            )
-                            recordCompletedCallTransaction(activeCall, durationSeconds, callCoins)
                             val finishedCall = CallHistory(
                                 callId = "",
                                 userId = activeCall.userId,
@@ -4581,33 +4528,6 @@ private fun RemoteWalletTransaction.toWalletTransactionEntry(): WalletTransactio
         durationSeconds = durationSeconds,
         messageCount = messageCount,
         syncStatus = WalletSyncStatus.SYNCED
-    )
-}
-
-private fun WalletTransactionEntry.toRecordWalletTransactionRequest(): RecordWalletTransactionRequest {
-    return RecordWalletTransactionRequest(
-        kind = when (kind) {
-            WalletTransactionKind.AUDIO_CALL -> "audio_call"
-            WalletTransactionKind.VIDEO_CALL -> "video_call"
-            WalletTransactionKind.CHAT -> "chat"
-            WalletTransactionKind.PAYMENT -> "payment"
-        },
-        title = title,
-        detail = detail,
-        amountText = amountText,
-        coinsDelta = coinsDelta,
-        rechargeAmountRupees = rechargeAmountRupees,
-        status = when (status) {
-            WalletTransactionStatus.COMPLETED -> "completed"
-            WalletTransactionStatus.REJECTED -> "rejected"
-            WalletTransactionStatus.PENDING -> "pending"
-            WalletTransactionStatus.PROCESSING -> "processing"
-            WalletTransactionStatus.FAILED -> "failed"
-        },
-        counterpartyName = counterpartyName,
-        callStatus = null,
-        durationSeconds = durationSeconds,
-        messageCount = messageCount
     )
 }
 

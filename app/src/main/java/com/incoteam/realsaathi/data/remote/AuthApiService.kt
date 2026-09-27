@@ -8,7 +8,6 @@ import com.incoteam.realsaathi.data.model.auth.RefreshSessionResponse
 import com.incoteam.realsaathi.data.model.auth.LanguagesResponse
 import com.incoteam.realsaathi.data.model.auth.RandomMatchRequest
 import com.incoteam.realsaathi.data.model.auth.RandomMatchResponse
-import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionRequest
 import com.incoteam.realsaathi.data.model.auth.CallEventRequest
 import com.incoteam.realsaathi.data.model.auth.RecordWalletTransactionResponse
 import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
@@ -185,13 +184,6 @@ interface AuthApiService {
         @Header("X-Session-Token") sessionToken: String,
         @Body request: Map<String, String> = emptyMap()
     ): Response<ZegoTokenResponse>
-
-    @POST
-    suspend fun recordWalletTransaction(
-        @Url url: String,
-        @Header("X-Session-Token") sessionToken: String,
-        @Body request: RecordWalletTransactionRequest
-    ): Response<RecordWalletTransactionResponse>
 
     @POST
     suspend fun recordCallEvent(

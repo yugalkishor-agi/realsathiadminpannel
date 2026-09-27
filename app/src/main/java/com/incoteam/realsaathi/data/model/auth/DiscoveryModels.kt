@@ -12,8 +12,8 @@ data class DiscoveryHost(
     val preferredLanguage: String = "All",
     val hostAudioLive: Boolean = false,
     val hostVideoLive: Boolean = false,
-    val hostAudioRate: Int = 35,
-    val hostVideoRate: Int = 65,
+    val hostAudioRate: Int = 20,
+    val hostVideoRate: Int = 60,
     val hostStatus: String = "not_applicable",
     val hostStories: List<RemoteHostStory> = emptyList()
 )

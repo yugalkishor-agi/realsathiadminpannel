@@ -18,8 +18,13 @@ data class RemoteUserProfile(
     val communityExperience: String? = null,
     val hostAudioLive: Boolean = false,
     val hostVideoLive: Boolean = false,
-    val hostAudioRate: Int = 35,
-    val hostVideoRate: Int = 65,
+    val hostAudioRate: Int = 20,
+    val hostVideoRate: Int = 60,
+    val hostRank: String = "starter",
+    val hostTotalCallMinutes: Int = 0,
+    val hostSharePercent: Double = 25.0,
+    val hostAudioEarningPerMinute: Double = 0.0,
+    val hostVideoEarningPerMinute: Double = 0.0,
     val hostProfilePhotoUrl: String? = null,
     val hostStories: List<RemoteHostStory> = emptyList()
 )

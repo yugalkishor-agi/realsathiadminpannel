@@ -11,11 +11,39 @@ function requiredJwtSecret(name: "JWT_ACCESS_SECRET" | "JWT_REFRESH_SECRET") {
 export const DEFAULT_LANGUAGE = "All";
 export const DEFAULT_ACCOUNT_MODE = "customer";
 export const DEFAULT_HOST_STATUS = "not_applicable";
-export const DEFAULT_AUDIO_RATE = 35;
-export const DEFAULT_VIDEO_RATE = 65;
+export const DEFAULT_AUDIO_RATE = 20;
+export const DEFAULT_VIDEO_RATE = 60;
 export const DEFAULT_AVATAR_ID = 9;
 export const HOST_STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 export const MAX_HOST_STORIES = 12;
+
+function hostGrossRate(rank: string, isVideo: boolean) {
+  const rates: Record<string, { audio: number; video: number }> = {
+    starter: { audio: 1.39, video: 4.16 },
+    bronze: { audio: 1.55, video: 4.66 },
+    silver: { audio: 1.77, video: 5.32 },
+    gold: { audio: 1.94, video: 5.82 },
+    platinum: { audio: 2.11, video: 6.32 },
+    diamond: { audio: 2.33, video: 6.99 },
+  };
+  return rates[rank]?.[isVideo ? "video" : "audio"] ?? rates.starter[isVideo ? "video" : "audio"];
+}
+
+function hostShareForRank(rank: string) {
+  const shares: Record<string, number> = {
+    starter: 25,
+    bronze: 28,
+    silver: 32,
+    gold: 35,
+    platinum: 38,
+    diamond: 42,
+  };
+  return shares[rank] ?? shares.starter;
+}
+
+function hostEarningRate(rank: string, isVideo: boolean) {
+  return Number((hostGrossRate(rank, isVideo) * hostShareForRank(rank) / 100).toFixed(2));
+}
 
 export function createAdminClient() {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -232,6 +260,8 @@ export function buildProfilePayload(userRow: Record<string, unknown>) {
     String(userRow.username ?? "").trim() ||
     buildDisplayName(String(userRow.id ?? ""));
   const userId = String(userRow.id ?? "").trim();
+  const hostRank = String(userRow.host_rank ?? "starter").trim() || "starter";
+  const hostSharePercent = Number(userRow.host_share_percent ?? 25) || 25;
   const hostStories = normalizeHostStories(
     userRow.host_story_items,
     userId,
@@ -264,6 +294,11 @@ export function buildProfilePayload(userRow: Record<string, unknown>) {
       Number(userRow.host_audio_rate ?? DEFAULT_AUDIO_RATE) || DEFAULT_AUDIO_RATE,
     hostVideoRate:
       Number(userRow.host_video_rate ?? DEFAULT_VIDEO_RATE) || DEFAULT_VIDEO_RATE,
+    hostRank,
+    hostTotalCallMinutes: Number(userRow.host_total_call_minutes ?? 0) || 0,
+    hostSharePercent,
+    hostAudioEarningPerMinute: hostEarningRate(hostRank, false),
+    hostVideoEarningPerMinute: hostEarningRate(hostRank, true),
     hostProfilePhotoUrl: String(userRow.host_profile_photo_url ?? "").trim(),
     hostStories,
   };

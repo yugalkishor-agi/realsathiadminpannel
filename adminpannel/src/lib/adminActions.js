@@ -15,6 +15,10 @@ export function adminCreditWallet(userId, coins, reason) {
   })
 }
 
+export function adminUnbanDevice(deviceId) {
+  return supabase.rpc('admin_unban_device', { p_device_id: deviceId })
+}
+
 export async function setAdminUserStatus(userId, status, reason = '') {
   const rpc = await supabase.rpc('admin_set_user_status', { p_user_id: userId, p_status: status, p_reason: reason })
   if (!rpc.error || !functionMissing(rpc.error)) return rpc

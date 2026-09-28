@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
     const communityCity = String(body?.communityCity ?? "").trim();
     const communityAbout = String(body?.communityAbout ?? "").trim();
     const communityExperience = String(body?.communityExperience ?? "").trim();
+    const age = body?.age == null ? null : Number(body.age);
 
     if (nickname.length < 2) {
       return jsonResponse(
@@ -54,12 +55,15 @@ Deno.serve(async (req) => {
         422
       );
     }
+    if (age !== null && (!Number.isInteger(age) || age < 18 || age > 99)) {
+      return jsonResponse({ message: "Age must be between 18 and 99." }, 422);
+    }
 
     if (accountMode === "community") {
       if (
         communityName.length < 2 ||
         communityCity.length < 2 ||
-        communityAbout.length < 20
+        communityAbout.length === 0
       ) {
         return jsonResponse(
           { message: "Please complete your community details." },
@@ -79,12 +83,24 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "User account not found." }, 404);
     }
 
+    if (accountMode === "community" && currentUser.account_mode !== "community") {
+      const { data: verification, error: verificationError } = await supabase
+        .from("account_voice_verifications")
+        .select("status")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (verificationError || verification?.status !== "approved") {
+        return jsonResponse({ message: "Complete voice verification and wait for approval before host setup." }, 403);
+      }
+    }
+
     const updatePayload = {
       username: nickname,
       gender,
       language: preferredLanguage,
       avatar_id: avatarId,
       interests,
+      ...(age === null ? {} : { age }),
       account_mode: accountMode,
       role: accountMode === "community" ? "host" : "user",
       host_status:
@@ -96,7 +112,7 @@ Deno.serve(async (req) => {
         accountMode === "community" ? communityExperience : "",
       host_profile_photo_url:
         accountMode === "community"
-          ? String(currentUser.host_profile_photo_url ?? "").trim()
+          ? String(currentUser.host_profile_photo_url ?? "").trim() || String(currentUser.profile_photo_url ?? "").trim()
           : "",
       host_story_items:
         accountMode === "community"

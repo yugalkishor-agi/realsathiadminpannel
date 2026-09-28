@@ -26,5 +26,6 @@ data class RemoteUserProfile(
     val hostAudioEarningPerMinute: Double = 0.0,
     val hostVideoEarningPerMinute: Double = 0.0,
     val hostProfilePhotoUrl: String? = null,
+    val profilePhotoUrl: String? = null,
     val hostStories: List<RemoteHostStory> = emptyList()
 )

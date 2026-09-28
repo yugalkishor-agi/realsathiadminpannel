@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       duration: formatDuration(Number(row.metadata?.durationSeconds ?? 0)),
       durationSeconds: Number(row.metadata?.durationSeconds ?? 0),
       messageCount: Number(row.metadata?.messageCount ?? 0),
-      amount: Math.round(asNumber(row.rupees_delta)),
+      amount: Number(asNumber(row.rupees_delta).toFixed(2)),
       time: formatLogTime(String(row.created_at ?? "")),
       createdAt: String(row.created_at ?? ""),
       callStatus: String(row.metadata?.callStatus ?? ""),
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       profile: buildProfilePayload(currentUser),
       wallet: {
         totalEarnings: Math.round(totalCallEarnings),
-        todayEarnings: Math.round(todayCallEarnings),
+        todayEarnings: Number(todayCallEarnings.toFixed(2)),
       },
       logs,
     });

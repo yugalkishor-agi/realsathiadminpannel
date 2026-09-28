@@ -12,7 +12,8 @@ class SessionManager(context: Context) {
 
     fun saveAuthSession(response: VerifyOtpResponse) {
         val needsProfileSetup = response.isNewUser || profileNeedsSetup(response.profile)
-        preferences.edit()
+        val accountChanged = getUserId().isNotBlank() && getUserId() != response.user.id
+        val editor = preferences.edit()
             .putString(KEY_ACCESS_TOKEN, response.accessToken)
             .putString(KEY_REFRESH_TOKEN, response.refreshToken)
             .putString(KEY_USER_ID, response.user.id)
@@ -21,17 +22,19 @@ class SessionManager(context: Context) {
             .putString(KEY_PUBLIC_ID, resolvePublicId(response.user))
             .putBoolean(KEY_IS_HOST, response.user.isHost)
             .putBoolean(KEY_NEEDS_PROFILE_SETUP, needsProfileSetup)
-            .apply()
+        if (response.user.isHost || accountChanged) editor.remove(KEY_HOST_ONBOARDING_STEP)
+        editor.apply()
     }
 
     fun updateUserSession(user: UserSession) {
-        preferences.edit()
+        val editor = preferences.edit()
             .putString(KEY_USER_ID, user.id)
             .putString(KEY_PHONE_NUMBER, user.phoneNumber)
             .putString(KEY_DISPLAY_NAME, user.displayName)
             .putString(KEY_PUBLIC_ID, resolvePublicId(user))
             .putBoolean(KEY_IS_HOST, user.isHost)
-            .apply()
+        if (user.isHost) editor.remove(KEY_HOST_ONBOARDING_STEP)
+        editor.apply()
     }
 
     fun saveRefreshedSession(response: RefreshSessionResponse) {
@@ -45,6 +48,7 @@ class SessionManager(context: Context) {
         if (!response.refreshToken.isNullOrBlank()) {
             editor.putString(KEY_REFRESH_TOKEN, response.refreshToken)
         }
+        if (response.user.isHost) editor.remove(KEY_HOST_ONBOARDING_STEP)
         editor.apply()
     }
 
@@ -81,6 +85,19 @@ class SessionManager(context: Context) {
             .apply()
     }
 
+    fun saveHostOnboardingStep(step: String) {
+        preferences.edit().putString(KEY_HOST_ONBOARDING_STEP, step).apply()
+    }
+
+    fun getHostOnboardingStep(): String =
+        preferences.getString(KEY_HOST_ONBOARDING_STEP, "").orEmpty()
+
+    fun hasHostOnboardingInProgress(): Boolean = getHostOnboardingStep().isNotBlank()
+
+    fun clearHostOnboarding() {
+        preferences.edit().remove(KEY_HOST_ONBOARDING_STEP).apply()
+    }
+
     fun logout() {
         preferences.edit().clear().apply()
     }
@@ -95,6 +112,7 @@ class SessionManager(context: Context) {
         private const val KEY_PUBLIC_ID = "public_id"
         private const val KEY_IS_HOST = "is_host"
         private const val KEY_NEEDS_PROFILE_SETUP = "needs_profile_setup"
+        private const val KEY_HOST_ONBOARDING_STEP = "host_onboarding_step"
     }
 
     private fun profileNeedsSetup(profile: RemoteUserProfile?): Boolean {

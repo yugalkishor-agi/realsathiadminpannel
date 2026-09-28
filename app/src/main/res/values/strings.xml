@@ -53,4 +53,6 @@
     <string name="content_desc_country_selector">Country selector</string>
     <string name="content_desc_edit_number">Edit number</string>
     <string name="content_desc_brand_logo">RealSaathi brand logo</string>
+    <string name="call_answer">Answer call</string>
+    <string name="call_decline">Decline</string>
 </resources>

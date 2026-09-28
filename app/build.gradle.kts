@@ -35,6 +35,13 @@ val debugBaseUrl = normalizeBaseUrl(localConfig("REALSAATHI_DEBUG_BASE_URL", def
 val releaseBaseUrl = localConfig("REALSAATHI_RELEASE_BASE_URL", defaultRemoteBaseUrl)
 val debugAuthMode = localConfig("REALSAATHI_AUTH_MODE", "supabase_edge")
 val releaseAuthMode = localConfig("REALSAATHI_RELEASE_AUTH_MODE", "supabase_edge")
+val releaseKeystorePath = localConfig(
+    "REALSAATHI_RELEASE_KEYSTORE",
+    rootProject.file("realsaathi-release.jks").absolutePath
+)
+val releaseStorePassword = localConfig("REALSAATHI_RELEASE_STORE_PASSWORD", "")
+val releaseKeyAlias = localConfig("REALSAATHI_RELEASE_KEY_ALIAS", "realsaathi")
+val releaseKeyPassword = localConfig("REALSAATHI_RELEASE_KEY_PASSWORD", releaseStorePassword)
 val debugSendOtpUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/auth/otp/send", "send-otp")
 val debugVerifyOtpUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/auth/otp/verify", "verify-otp")
 val debugRefreshSessionUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/auth/session/refresh", "refresh-session")
@@ -45,6 +52,7 @@ val debugHostDashboardUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/host/d
 val debugHostKycUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/host/kyc", "host-kyc")
 val debugHostSettingsUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/host/settings/save", "save-host-settings")
 val debugUploadHostMediaUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/host/media/upload", "upload-host-media")
+val debugAccountVerificationUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/account/verification", "account-verification")
 val debugConfigTagsUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/config/tags", "config-tags")
 val debugConfigLanguagesUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/config/languages", "config-languages")
 val debugConfigBannersUrl = authEndpoint(debugBaseUrl, debugAuthMode, "v1/config/banners", "config-banners")
@@ -70,6 +78,7 @@ val releaseHostDashboardUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/
 val releaseHostKycUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/host/kyc", "host-kyc")
 val releaseHostSettingsUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/host/settings/save", "save-host-settings")
 val releaseUploadHostMediaUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/host/media/upload", "upload-host-media")
+val releaseAccountVerificationUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/account/verification", "account-verification")
 val releaseConfigTagsUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/config/tags", "config-tags")
 val releaseConfigLanguagesUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/config/languages", "config-languages")
 val releaseConfigBannersUrl = authEndpoint(releaseBaseUrl, releaseAuthMode, "v1/config/banners", "config-banners")
@@ -134,6 +143,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystore = rootProject.file(releaseKeystorePath)
+            if (!keystore.exists()) {
+                throw GradleException("Release keystore not found: ${keystore.absolutePath}")
+            }
+            if (releaseStorePassword.isBlank() || releaseKeyPassword.isBlank()) {
+                throw GradleException(
+                    "Set REALSAATHI_RELEASE_STORE_PASSWORD and REALSAATHI_RELEASE_KEY_PASSWORD in local.properties"
+                )
+            }
+            storeFile = keystore
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+    }
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
@@ -147,6 +173,7 @@ android {
             buildConfigField("String", "HOST_KYC_URL", "\"$debugHostKycUrl\"")
             buildConfigField("String", "SAVE_HOST_SETTINGS_URL", "\"$debugHostSettingsUrl\"")
             buildConfigField("String", "UPLOAD_HOST_MEDIA_URL", "\"$debugUploadHostMediaUrl\"")
+            buildConfigField("String", "ACCOUNT_VERIFICATION_URL", "\"$debugAccountVerificationUrl\"")
             buildConfigField("String", "CONFIG_TAGS_URL", "\"$debugConfigTagsUrl\"")
             buildConfigField("String", "CONFIG_LANGUAGES_URL", "\"$debugConfigLanguagesUrl\"")
             buildConfigField("String", "CONFIG_BANNERS_URL", "\"$debugConfigBannersUrl\"")
@@ -166,6 +193,7 @@ android {
         }
 
         release {
+            signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "BASE_URL", "\"${normalizeBaseUrl(releaseBaseUrl)}\"")
             buildConfigField("String", "SEND_OTP_URL", "\"$releaseSendOtpUrl\"")
             buildConfigField("String", "VERIFY_OTP_URL", "\"$releaseVerifyOtpUrl\"")
@@ -177,6 +205,7 @@ android {
             buildConfigField("String", "HOST_KYC_URL", "\"$releaseHostKycUrl\"")
             buildConfigField("String", "SAVE_HOST_SETTINGS_URL", "\"$releaseHostSettingsUrl\"")
             buildConfigField("String", "UPLOAD_HOST_MEDIA_URL", "\"$releaseUploadHostMediaUrl\"")
+            buildConfigField("String", "ACCOUNT_VERIFICATION_URL", "\"$releaseAccountVerificationUrl\"")
             buildConfigField("String", "CONFIG_TAGS_URL", "\"$releaseConfigTagsUrl\"")
             buildConfigField("String", "CONFIG_LANGUAGES_URL", "\"$releaseConfigLanguagesUrl\"")
             buildConfigField("String", "CONFIG_BANNERS_URL", "\"$releaseConfigBannersUrl\"")

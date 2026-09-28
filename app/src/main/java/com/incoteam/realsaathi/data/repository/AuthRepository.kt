@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.incoteam.realsaathi.BuildConfig
 import com.incoteam.realsaathi.core.session.SessionManager
 import com.incoteam.realsaathi.data.model.auth.DiscoveryHostsResponse
+import com.incoteam.realsaathi.data.model.auth.AccountVoiceVerification
 import com.incoteam.realsaathi.data.model.auth.HostDashboardResponse
 import com.incoteam.realsaathi.data.model.auth.HostKycRequest
 import com.incoteam.realsaathi.data.model.auth.HostKycResponse
@@ -460,6 +461,27 @@ class AuthRepository(
                     file = filePart,
                     purpose = purposeBody
                 )
+            }
+        }
+    }
+
+    suspend fun getAccountVoiceVerification(accessToken: String): Result<AccountVoiceVerification> = runCatching {
+        executeProtectedRequest(accessToken, "Unable to load verification status.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.ACCOUNT_VERIFICATION_URL) { url ->
+                authApiService.getAccountVoiceVerification(url, sessionToken(activeToken), mapOf("action" to "status"))
+            }
+        }
+    }
+
+    suspend fun submitAccountVoiceVerification(
+        accessToken: String, file: File, prompt: String, metadata: Map<String, Any>
+    ): Result<AccountVoiceVerification> = runCatching {
+        val part = MultipartBody.Part.createFormData("audio", file.name, file.asRequestBody("audio/mp4".toMediaTypeOrNull()))
+        val promptBody = prompt.toRequestBody("text/plain".toMediaTypeOrNull())
+        val metadataBody = gson.toJson(metadata).toRequestBody("text/plain".toMediaTypeOrNull())
+        executeProtectedRequest(accessToken, "Unable to submit voice verification.") { activeToken ->
+            executeWithConfiguredEndpoint(BuildConfig.ACCOUNT_VERIFICATION_URL) { url ->
+                authApiService.submitAccountVoiceVerification(url, sessionToken(activeToken), part, promptBody, metadataBody)
             }
         }
     }

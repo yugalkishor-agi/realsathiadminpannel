@@ -147,6 +147,7 @@ class OtpVerificationActivity : AppCompatActivity() {
                 is UiState.Success -> {
                     renderVerifyLoading(false)
                     val sessionManager = (application as RealSaathiApp).sessionManager
+                    UserPrefs.prepareForAccount(this, state.data.user.id)
                     sessionManager.saveAuthSession(state.data)
                     state.data.profile?.let { profile ->
                         UserPrefs.syncFromRemoteProfile(this, profile)

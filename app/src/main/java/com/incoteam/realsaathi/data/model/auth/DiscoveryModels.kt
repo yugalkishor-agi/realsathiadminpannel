@@ -6,6 +6,8 @@ data class DiscoveryHost(
     val username: String? = null,
     val publicId: String? = null,
     val avatarUrl: String? = null,
+    val avatarId: Int = 9,
+    val profilePhotoUrl: String? = null,
     val hostProfilePhotoUrl: String? = null,
     val topicTags: List<String> = emptyList(),
     val nativeLanguages: List<String> = emptyList(),

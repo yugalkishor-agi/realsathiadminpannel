@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.direct-chat]
 verify_jwt = false
+
+[functions.account-verification]
+verify_jwt = false

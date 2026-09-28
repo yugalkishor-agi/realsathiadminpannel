@@ -43,6 +43,8 @@ export async function eligibleHosts(
         nickname: profile.nickname,
         username: profile.username,
         avatarUrl: host.host_profile_photo_url || host.avatar_url || null,
+        avatarId: profile.avatarId,
+        profilePhotoUrl: profile.profilePhotoUrl,
         hostProfilePhotoUrl: profile.hostProfilePhotoUrl,
         topicTags: stringList(host.topic_tags?.length ? host.topic_tags : host.interests),
         nativeLanguages: stringList(host.native_languages?.length ? host.native_languages : host.language),

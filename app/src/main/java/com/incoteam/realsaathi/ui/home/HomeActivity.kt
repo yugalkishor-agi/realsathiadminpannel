@@ -101,6 +101,8 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
         private const val KEY_CALL_RATE = "call_rate"
         private const val KEY_CALL_INCLUDED_SECONDS = "call_included_seconds"
         private const val KEY_CALL_STARTED_AT = "call_started_at"
+        private const val KEY_CALL_AVATAR_ID = "call_avatar_id"
+        private const val KEY_CALL_PROFILE_PHOTO_URL = "call_profile_photo_url"
         private const val KEY_CALL_SPEAKER_ON = "call_speaker_on"
         private const val KEY_CALL_MIC_MUTED = "call_mic_muted"
         private const val KEY_CALL_AUDIO_ROUTE = "call_audio_route"
@@ -211,7 +213,8 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
         // Profile setup may open once immediately after a new signup. A normal app
         // launch must always land on Home, even when an older session still carries
         // an incomplete-profile flag.
-        shouldForceProfileSetup = intent.getBooleanExtra(EXTRA_FORCE_PROFILE_SETUP, false)
+        shouldForceProfileSetup = intent.getBooleanExtra(EXTRA_FORCE_PROFILE_SETUP, false) ||
+            sessionManager.hasHostOnboardingInProgress()
 
         updateActiveCallSession(null)
         callMicMuted = restorePersistedMicState()
@@ -363,6 +366,7 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
                             onProfileSetupCompleted = {
                                 shouldForceProfileSetup = false
                                 sessionManager.markProfileSetupCompleted()
+                                if (!sessionManager.isHost()) sessionManager.clearHostOnboarding()
                                 if (sessionManager.isHost()) {
                                     recreate()
                                 }
@@ -493,6 +497,8 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
             .putInt(KEY_CALL_RATE, session.ratePerMinute)
             .putLong(KEY_CALL_INCLUDED_SECONDS, session.includedSecondsAtStart ?: -1L)
             .putLong(KEY_CALL_STARTED_AT, session.startedAtMillis)
+            .putInt(KEY_CALL_AVATAR_ID, session.avatarId)
+            .putString(KEY_CALL_PROFILE_PHOTO_URL, session.profilePhotoUrl)
             .putBoolean(KEY_CALL_MIC_MUTED, callMicMuted)
             .putBoolean(KEY_CALL_SPEAKER_ON, manualCallAudioRoute == CallAudioRoute.SPEAKER)
             .putString(KEY_CALL_AUDIO_ROUTE, manualCallAudioRoute.name)
@@ -550,7 +556,9 @@ class HomeActivity : ComponentActivity(), CFCheckoutResponseCallback {
             publicId = publicId,
             ratePerMinute = prefs.getInt(KEY_CALL_RATE, 0),
             includedSecondsAtStart = includedSeconds,
-            startedAtMillis = startedAtMillis
+            startedAtMillis = startedAtMillis,
+            avatarId = prefs.getInt(KEY_CALL_AVATAR_ID, DefaultAvatarId),
+            profilePhotoUrl = prefs.getString(KEY_CALL_PROFILE_PHOTO_URL, null)
         )
     }
 

@@ -167,6 +167,8 @@ class ZegoCallManager(
         endCallWhenInitiatorLeave = true
         incomingCallBackground = application.getDrawable(com.incoteam.realsaathi.R.drawable.bg_call_waiting)
         outgoingCallBackground = application.getDrawable(com.incoteam.realsaathi.R.drawable.bg_call_waiting)
+        translationText.incomingCallPageAcceptButton = application.getString(com.incoteam.realsaathi.R.string.call_answer)
+        translationText.incomingCallPageDeclineButton = application.getString(com.incoteam.realsaathi.R.string.call_decline)
         provider = ZegoUIKitPrebuiltCallConfigProvider { invitation ->
             val isVideo = invitation.type == ZegoInvitationType.VIDEO_CALL.value
             polishedCallConfig(isVideo)

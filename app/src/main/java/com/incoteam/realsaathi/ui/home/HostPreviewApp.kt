@@ -107,8 +107,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.focus.onFocusChanged
@@ -192,6 +190,7 @@ fun HostPreviewApp(
     var hostProfilePhotoUri by rememberSaveable {
         mutableStateOf(UserPrefs.getHostProfilePhotoUri(context))
     }
+    var hostAvatarId by rememberSaveable { mutableStateOf(UserPrefs.getAvatar(context)) }
     val storyUploads = remember {
         mutableStateListOf<UploadedHostStory>().apply {
             addAll(UserPrefs.getHostUploadedStories(context))
@@ -209,10 +208,12 @@ fun HostPreviewApp(
     var isHostHomeRefreshing by remember { mutableStateOf(false) }
     var totalEarnings by rememberSaveable { mutableStateOf(0) }
     var walletBalance by rememberSaveable { mutableStateOf(0) }
-    var todayEarnings by rememberSaveable { mutableStateOf(0) }
+    var todayEarnings by rememberSaveable { mutableStateOf(0.0) }
     var hostRank by rememberSaveable { mutableStateOf("starter") }
     var hostTotalCallMinutes by rememberSaveable { mutableStateOf(0) }
     var hostSharePercent by rememberSaveable { mutableStateOf(25.0) }
+    var hostAudioEarningPerMinute by rememberSaveable { mutableStateOf(0.0) }
+    var hostVideoEarningPerMinute by rememberSaveable { mutableStateOf(0.0) }
     var pendingCapture by remember { mutableStateOf<PendingHostCapture?>(null) }
     var switchingToCustomerMode by remember { mutableStateOf(false) }
     val isLive = audioLive || videoLive
@@ -240,7 +241,11 @@ fun HostPreviewApp(
         hostRank = profile.hostRank
         hostTotalCallMinutes = profile.hostTotalCallMinutes
         hostSharePercent = profile.hostSharePercent
+        hostAudioEarningPerMinute = profile.hostAudioEarningPerMinute
+        hostVideoEarningPerMinute = profile.hostVideoEarningPerMinute
+        hostAvatarId = profile.avatarId.takeIf { it > 0 } ?: DefaultAvatarId
         hostProfilePhotoUri = profile.hostProfilePhotoUrl.orEmpty()
+            .ifBlank { profile.profilePhotoUrl.orEmpty() }
         val syncedStories = profile.hostStories.orEmpty().map { it.toUploadedHostStory() }
         if (storyUploads.toList() != syncedStories) {
             storyUploads.clear()
@@ -772,9 +777,12 @@ fun HostPreviewApp(
                 HostProfileHome(
                     hostName = hostName,
                     profilePhotoUri = hostProfilePhotoUri,
+                    avatarId = hostAvatarId,
                     hostRank = hostRank,
                     hostTotalCallMinutes = hostTotalCallMinutes,
                     hostSharePercent = hostSharePercent,
+                    hostAudioEarningPerMinute = hostAudioEarningPerMinute,
+                    hostVideoEarningPerMinute = hostVideoEarningPerMinute,
                     onEditProfile = { showHostEditProfile = true },
                     onKyc = { hostProfileScreen = "kyc" },
                     onWallet = { showWallet = true },
@@ -808,15 +816,21 @@ fun HostPreviewApp(
                                 HostStudioCard(
                                     audioLive = audioLive,
                                     videoLive = videoLive,
-                                    audioRate = audioRate,
-                                    videoRate = videoRate,
                                     onAudioToggle = ::updateAudioLive,
                                     onVideoToggle = ::updateVideoLive
                                 )
                             }
                             item {
+                                HostRankBadge(
+                                    rank = hostRank,
+                                    totalCallMinutes = hostTotalCallMinutes
+                                )
+                            }
+                            item {
                                 HostTodayEarningsCard(
                                     todayEarnings = todayEarnings,
+                                    audioEarningPerMinute = hostAudioEarningPerMinute,
+                                    videoEarningPerMinute = hostVideoEarningPerMinute,
                                     onClick = { showWallet = true }
                                 )
                             }
@@ -856,9 +870,12 @@ fun HostPreviewApp(
 private fun HostProfileHome(
     hostName: String,
     profilePhotoUri: String,
+    avatarId: Int,
     hostRank: String,
     hostTotalCallMinutes: Int,
     hostSharePercent: Double,
+    hostAudioEarningPerMinute: Double,
+    hostVideoEarningPerMinute: Double,
     onEditProfile: () -> Unit,
     onKyc: () -> Unit,
     onWallet: () -> Unit,
@@ -871,9 +888,12 @@ private fun HostProfileHome(
         HostProfileOverviewCard(
             hostName = hostName,
             profilePhotoUri = profilePhotoUri,
+            avatarId = avatarId,
             hostRank = hostRank,
             hostTotalCallMinutes = hostTotalCallMinutes,
             hostSharePercent = hostSharePercent,
+            hostAudioEarningPerMinute = hostAudioEarningPerMinute,
+            hostVideoEarningPerMinute = hostVideoEarningPerMinute,
             onEditProfile = onEditProfile
         )
         Spacer(Modifier.height(28.dp))
@@ -907,6 +927,7 @@ private fun HostAccountSettingsScreen(
     var blockedUsers by remember { mutableStateOf(emptyList<com.incoteam.realsaathi.data.model.auth.BlockedUserEntry>()) }
     var reportCases by remember { mutableStateOf(emptyList<com.incoteam.realsaathi.data.model.auth.UserReportEntry>()) }
     var isProcessing by rememberSaveable { mutableStateOf(false) }
+    var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
 
     BackHandler(enabled = !isProcessing) { onBack() }
 
@@ -956,7 +977,14 @@ private fun HostAccountSettingsScreen(
         HostProfileItem(text = "Feedback", onClick = onFeedback)
         Spacer(Modifier.height(28.dp))
         HostProfileItem(text = "Delete Account", danger = true, onClick = {
-            if (!isProcessing) {
+            if (!isProcessing) showDeleteConfirmation = true
+        })
+    }
+    if (showDeleteConfirmation) {
+        AccountDeleteConfirmDialog(
+            onCancel = { showDeleteConfirmation = false },
+            onConfirm = {
+                showDeleteConfirmation = false
                 scope.launch {
                     isProcessing = true
                     authRepository.deleteAccount(sessionManager.getAccessToken()).onSuccess { onDeleted() }
@@ -964,7 +992,7 @@ private fun HostAccountSettingsScreen(
                     isProcessing = false
                 }
             }
-        })
+        )
     }
 }
 
@@ -2842,9 +2870,12 @@ private fun HostEarningsChip(walletBalance: Int, onClick: () -> Unit) {
 private fun HostProfileOverviewCard(
     hostName: String,
     profilePhotoUri: String,
+    avatarId: Int,
     hostRank: String,
     hostTotalCallMinutes: Int,
     hostSharePercent: Double,
+    hostAudioEarningPerMinute: Double,
+    hostVideoEarningPerMinute: Double,
     onEditProfile: () -> Unit
 ) {
     val context = LocalContext.current
@@ -2856,10 +2887,10 @@ private fun HostProfileOverviewCard(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            HostProfilePhotoBubble(
-                profilePhotoUri = profilePhotoUri,
-                hostName = displayName,
-                modifier = Modifier.size(64.dp)
+            AvatarBubble(
+                avatar = avatarList.firstOrNull { it.id == avatarId } ?: avatarList.first(),
+                size = 64.dp,
+                profilePhotoUri = profilePhotoUri
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -2896,9 +2927,19 @@ private fun HostProfileOverviewCard(
         }
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "${hostRank.replaceFirstChar { it.uppercase() }} · $hostTotalCallMinutes call minutes",
+            text = "Your host rank",
             color = TextSubtle,
-            fontSize = 12.sp
+            fontSize = 11.sp
+        )
+        HostRankBadge(
+            rank = hostRank,
+            totalCallMinutes = hostTotalCallMinutes,
+            modifier = Modifier.padding(top = 6.dp)
+        )
+        HostEarningRates(
+            audioRate = hostAudioEarningPerMinute,
+            videoRate = hostVideoEarningPerMinute,
+            modifier = Modifier.padding(top = 10.dp)
         )
     }
 }
@@ -3240,8 +3281,6 @@ private fun HostProfileItemWithValue(
 private fun HostStudioCard(
     audioLive: Boolean,
     videoLive: Boolean,
-    audioRate: Int,
-    videoRate: Int,
     onAudioToggle: (Boolean) -> Unit,
     onVideoToggle: (Boolean) -> Unit
 ) {
@@ -3307,22 +3346,6 @@ private fun HostStudioCard(
                         onCheckedChange = onVideoToggle
                     )
                 }
-                HorizontalDivider(color = Color.White.copy(alpha = 0.09f))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HostRateMini(
-                        iconPainter = painterResource(id = R.drawable.ic_audio_call_modern),
-                        amount = audioRate
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    HostRateMini(
-                        iconPainter = painterResource(id = R.drawable.ic_video_call_modern),
-                        amount = videoRate
-                    )
-                }
             }
         }
     }
@@ -3372,45 +3395,10 @@ private fun HostStudioModeToggle(
 }
 
 @Composable
-private fun HostRateMini(
-    icon: ImageVector,
-    amount: Int,
-    modifier: Modifier = Modifier
-) = HostRateMini(
-    iconPainter = rememberVectorPainter(icon),
-    amount = amount,
-    modifier = modifier
-)
-
-@Composable
-private fun HostRateMini(
-    iconPainter: Painter,
-    amount: Int,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        Icon(
-            painter = iconPainter,
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.9f),
-            modifier = Modifier.size(13.dp)
-        )
-        Text(
-            text = "₹$amount/min",
-            color = Color.White.copy(alpha = 0.86f),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
 private fun HostTodayEarningsCard(
-    todayEarnings: Int,
+    todayEarnings: Double,
+    audioEarningPerMinute: Double,
+    videoEarningPerMinute: Double,
     onClick: () -> Unit
 ) {
     HostCard(
@@ -3443,6 +3431,11 @@ private fun HostTodayEarningsCard(
                 fontWeight = FontWeight.Light
             )
         }
+        HostEarningRates(
+            audioRate = audioEarningPerMinute,
+            videoRate = videoEarningPerMinute,
+            modifier = Modifier.padding(top = 14.dp)
+        )
     }
 }
 
@@ -3550,7 +3543,7 @@ private fun HostUploadPreviewCard(story: UploadedHostStory) {
 private fun HostWalletScreen(
     walletBalance: Int,
     totalEarnings: Int,
-    todayEarnings: Int,
+    todayEarnings: Double,
     withdrawals: List<HostWithdrawalTransaction>,
     onBack: () -> Unit
 ) {
@@ -3615,7 +3608,7 @@ private fun HostWalletScreen(
 }
 
 @Composable
-private fun HostWalletBalanceCard(walletBalance: Int, totalEarnings: Int, todayEarnings: Int) {
+private fun HostWalletBalanceCard(walletBalance: Int, totalEarnings: Int, todayEarnings: Double) {
     val displayBalance = walletBalance
     HostCard {
         Row(
@@ -3873,7 +3866,7 @@ private fun HostLogCard(log: HostLog) {
                 Text(log.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(hostLogTypeLabel(log), color = TextSubtle, fontSize = 12.sp)
             }
-            Text(formatCurrency(log.amount), color = Accent3, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(formatCurrencyDetailed(log.amount), color = Accent3, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         HorizontalDivider(color = Color.White.copy(alpha = 0.06f))
         Text(log.time, color = TextSubtle, fontSize = 12.sp)
@@ -4992,8 +4985,8 @@ private fun buildHostRecentStats(logs: List<HostLog>, totalEarnings: Int): List<
         HostRecentStat("Messages", messageCount.toString()),
         HostRecentStat("Cancelled Calls", cancelledCalls.toString()),
         HostRecentStat("Missed Calls", missedCalls.toString()),
-        HostRecentStat("Weekly Earning", formatCurrency(weeklyEarning)),
-        HostRecentStat("Monthly Earning", formatCurrency(monthlyEarning)),
+        HostRecentStat("Weekly Earning", formatCurrencyDetailed(weeklyEarning)),
+        HostRecentStat("Monthly Earning", formatCurrencyDetailed(monthlyEarning)),
         HostRecentStat("Lifetime Income", formatCurrency(totalEarnings))
     )
 }
@@ -5175,7 +5168,7 @@ private data class HostLog(
     val duration: String,
     val durationSeconds: Long,
     val messageCount: Int,
-    val amount: Int,
+    val amount: Double,
     val time: String,
     val createdAt: String,
     val callStatus: String

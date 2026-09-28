@@ -12,5 +12,6 @@ data class SaveProfileRequest(
     val communityName: String? = null,
     val communityCity: String? = null,
     val communityAbout: String? = null,
-    val communityExperience: String? = null
+    val communityExperience: String? = null,
+    val age: Int? = null
 )

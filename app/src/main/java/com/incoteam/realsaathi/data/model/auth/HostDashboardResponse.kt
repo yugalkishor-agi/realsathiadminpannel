@@ -9,7 +9,7 @@ data class HostDashboardResponse(
 
 data class HostWalletSummary(
     val totalEarnings: Int = 0,
-    val todayEarnings: Int = 0
+    val todayEarnings: Double = 0.0
 )
 
 data class HostDashboardLog(
@@ -20,7 +20,7 @@ data class HostDashboardLog(
     val durationSeconds: Long? = null,
     val messageCount: Int? = null,
     val callStatus: String? = null,
-    val amount: Int,
+    val amount: Double,
     val time: String,
     val createdAt: String? = null
 )

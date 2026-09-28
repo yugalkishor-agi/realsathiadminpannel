@@ -34,6 +34,7 @@ import com.incoteam.realsaathi.data.model.auth.VerifyOtpRequest
 import com.incoteam.realsaathi.data.model.auth.VerifyOtpResponse
 import com.incoteam.realsaathi.data.model.auth.WalletSummaryResponse
 import com.incoteam.realsaathi.data.model.auth.AppBannersResponse
+import com.incoteam.realsaathi.data.model.auth.AccountVoiceVerification
 import com.incoteam.realsaathi.data.model.auth.RechargeOrderRequest
 import com.incoteam.realsaathi.data.model.auth.RechargeOrderResponse
 import com.incoteam.realsaathi.data.model.auth.ZegoTokenResponse
@@ -227,4 +228,21 @@ interface AuthApiService {
         @Part file: MultipartBody.Part,
         @Part("purpose") purpose: RequestBody
     ): Response<UploadHostMediaResponse>
+
+    @POST
+    suspend fun getAccountVoiceVerification(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String,
+        @Body request: Map<String, String>
+    ): Response<AccountVoiceVerification>
+
+    @Multipart
+    @POST
+    suspend fun submitAccountVoiceVerification(
+        @Url url: String,
+        @Header("X-Session-Token") sessionToken: String,
+        @Part audio: MultipartBody.Part,
+        @Part("prompt") prompt: RequestBody,
+        @Part("metadata") metadata: RequestBody
+    ): Response<AccountVoiceVerification>
 }

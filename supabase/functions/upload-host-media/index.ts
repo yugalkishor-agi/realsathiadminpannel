@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
     const { data: currentUser, error: currentUserError } = await supabase
       .from("users")
-      .select("id, role")
+      .select("id, role, gender")
       .eq("id", userId)
       .single();
 
@@ -102,12 +102,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "Host account not found." }, 404);
     }
 
-    if (String(currentUser.role ?? "").trim().toLowerCase() !== "host") {
-      return jsonResponse(
-        { message: "Host media upload is only available for host accounts." },
-        403
-      );
-    }
+    const isHost = String(currentUser.role ?? "").trim().toLowerCase() === "host";
 
     const formData = await req.formData();
     const purpose = String(formData.get("purpose") ?? "").trim().toLowerCase();
@@ -117,22 +112,25 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "Media file is required." }, 422);
     }
 
-    if (purpose !== "profile_photo" && purpose !== "story") {
+    if (purpose !== "profile_photo" && purpose !== "story" && purpose !== "onboarding_photo") {
       return jsonResponse({ message: "Upload purpose is invalid." }, 422);
+    }
+    if (!isHost && purpose !== "onboarding_photo") {
+      return jsonResponse({ message: "Host media upload is only available for host accounts." }, 403);
     }
 
     const mimeType = String(file.type ?? "").trim().toLowerCase();
     const isImage = ALLOWED_IMAGE_TYPES.includes(mimeType);
     const isVideo = ALLOWED_VIDEO_TYPES.includes(mimeType);
 
-    if (purpose === "profile_photo" && !isImage) {
+    if ((purpose === "profile_photo" || purpose === "onboarding_photo") && !isImage) {
       return jsonResponse(
         { message: "Profile photo should be an image file." },
         422
       );
     }
 
-    if (purpose === "story" && !isImage && !isVideo) {
+    if (purpose === "story" && (!isHost || (!isImage && !isVideo))) {
       return jsonResponse(
         { message: "Story upload supports image or video files only." },
         422
@@ -173,6 +171,15 @@ Deno.serve(async (req) => {
     const { data: publicUrlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(storagePath);
+
+    if (purpose === "onboarding_photo") {
+      const { error: profileError } = await supabase.from("users")
+        .update({ profile_photo_url: publicUrlData.publicUrl }).eq("id", userId);
+      if (profileError) {
+        await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
+        return jsonResponse({ message: "Unable to save profile photo." }, 500);
+      }
+    }
 
     return jsonResponse({
       bucket: BUCKET_NAME,

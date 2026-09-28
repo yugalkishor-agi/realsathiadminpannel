@@ -7,6 +7,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import com.incoteam.realsaathi.R
 import com.incoteam.realsaathi.data.model.auth.RemoteHostStory
 import com.incoteam.realsaathi.data.model.auth.RemoteUserProfile
@@ -28,6 +29,9 @@ val TextSubtle = Color(0xFFCDB5C6)
 val SuccessGreen = Color(0xFFBEF264)
 val WarningAmber = Color(0xFFFFC857)
 val DangerRed = Color(0xFFFF5E92)
+val OnboardingBackgroundBrush = Brush.verticalGradient(
+    listOf(Color(0xFF220340), Color(0xFF3C1272), Color(0xFF4B1887))
+)
 const val DefaultAvatarId = 9
 
 data class Avatar(
@@ -75,7 +79,9 @@ data class User(
     val hostVideoLive: Boolean = false,
     val busyForMinutes: Int? = null,
     val publicId: String? = null,
-    val hostStories: List<RemoteHostStory> = emptyList()
+    val hostStories: List<RemoteHostStory> = emptyList(),
+    val avatarId: Int = DefaultAvatarId,
+    val profilePhotoUrl: String? = null
 )
 
 data class BlockedProfileUser(
@@ -142,7 +148,9 @@ data class ActiveCallSession(
     val publicId: String? = null,
     val ratePerMinute: Int = 0,
     val includedSecondsAtStart: Long? = null,
-    val startedAtMillis: Long = System.currentTimeMillis()
+    val startedAtMillis: Long = System.currentTimeMillis(),
+    val avatarId: Int = DefaultAvatarId,
+    val profilePhotoUrl: String? = null
 )
 
 // Strip the old generated suffix from cached call/chat names as well.
@@ -177,7 +185,16 @@ val avatarList = listOf(
     Avatar(10, "RV", listOf(Color(0xFF24B7FF), Color(0xFFFF55D9)), R.drawable.avatar_ai_10),
 
     Avatar(11, "AR", listOf(Color(0xFF1D8DFF), Color(0xFFFF4FC8)), R.drawable.avatar_ai_11),
-    Avatar(12, "SK", listOf(Color(0xFF29C2FF), Color(0xFFFF68E0)), R.drawable.avatar_ai_12)
+    Avatar(12, "SK", listOf(Color(0xFF29C2FF), Color(0xFFFF68E0)), R.drawable.avatar_ai_12),
+    Avatar(20, "F1", listOf(Accent2, Accent1), R.drawable.onboarding_female_avatar1),
+    Avatar(21, "F2", listOf(Accent2, Accent1), R.drawable.onboarding_female_avatar2),
+    Avatar(22, "F3", listOf(Accent2, Accent1), R.drawable.onboarding_female_avatar3),
+    Avatar(30, "M1", listOf(Accent2, Accent1), R.drawable.onboarding_male_avatar1),
+    Avatar(31, "M2", listOf(Accent2, Accent1), R.drawable.onboarding_male_avatar2),
+    Avatar(32, "M3", listOf(Accent2, Accent1), R.drawable.onboarding_male_avatar3),
+    Avatar(33, "M4", listOf(Accent2, Accent1), R.drawable.onboarding_male_avatar4),
+    Avatar(34, "M5", listOf(Accent2, Accent1), R.drawable.onboarding_male_avatar5),
+    Avatar(35, "M6", listOf(Accent2, Accent1), R.drawable.onboarding_male_avatar6)
 )
 
 val walletCoinPacks = listOf(
@@ -248,6 +265,7 @@ object UserPrefs {
     private const val KEY_HOST_VIDEO_RATE = "host_video_rate"
     private const val KEY_HOST_DISPLAY_NAME = "host_display_name"
     private const val KEY_HOST_PROFILE_PHOTO_URI = "host_profile_photo_uri"
+    private const val KEY_PROFILE_PHOTO_URL = "profile_photo_url"
     private const val KEY_HOST_UPLOADED_STORIES = "host_uploaded_stories"
     private const val KEY_COMMUNITY_NAME = "community_name"
     private const val KEY_COMMUNITY_CITY = "community_city"
@@ -255,6 +273,31 @@ object UserPrefs {
     private const val KEY_COMMUNITY_EXPERIENCE = "community_experience"
     private const val KEY_CONFIG_TOPIC_OPTIONS = "config_topic_options"
     private const val KEY_CONFIG_LANGUAGE_OPTIONS = "config_language_options"
+    private const val KEY_BOUND_USER_ID = "bound_user_id"
+
+    fun prepareForAccount(ctx: Context, userId: String) {
+        val prefs = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+        val previousUserId = prefs.getString(KEY_BOUND_USER_ID, "").orEmpty()
+        if (previousUserId.isNotBlank() && previousUserId != userId) clearAccountData(ctx)
+        prefs.edit().putString(KEY_BOUND_USER_ID, userId).apply()
+    }
+
+    fun clearAccountData(ctx: Context) {
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+            .remove(KEY_NICKNAME).remove(KEY_USERNAME).remove(KEY_PUBLIC_ID)
+            .remove(KEY_USERNAME_LAST_CHANGED).remove(KEY_RESERVED_USERNAMES)
+            .remove(KEY_GENDER).remove(KEY_GENDER_LOCKED).remove(KEY_AVATAR)
+            .remove(KEY_INTERESTS).remove(KEY_LANGUAGE).remove(KEY_COINS)
+            .remove(KEY_PROFILE_CUSTOMIZED).remove(KEY_ACCOUNT_MODE)
+            .remove(KEY_HOST_AUDIO_LIVE).remove(KEY_HOST_VIDEO_LIVE)
+            .remove(KEY_HOST_AUDIO_RATE).remove(KEY_HOST_VIDEO_RATE)
+            .remove(KEY_HOST_DISPLAY_NAME).remove(KEY_HOST_PROFILE_PHOTO_URI)
+            .remove(KEY_PROFILE_PHOTO_URL).remove(KEY_HOST_UPLOADED_STORIES)
+            .remove(KEY_COMMUNITY_NAME).remove(KEY_COMMUNITY_CITY)
+            .remove(KEY_COMMUNITY_ABOUT).remove(KEY_COMMUNITY_EXPERIENCE)
+            .remove(KEY_ONBOARDING_AGE)
+            .remove(KEY_BOUND_USER_ID).apply()
+    }
 
     fun saveNickname(ctx: Context, name: String) {
         val prefs = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
@@ -328,6 +371,17 @@ object UserPrefs {
             .putBoolean(KEY_PROFILE_CUSTOMIZED, true)
             .apply()
     }
+
+    private const val KEY_ONBOARDING_AGE = "onboarding_age"
+
+    fun saveOnboardingAge(ctx: Context, age: String) {
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+            .putString(KEY_ONBOARDING_AGE, age).apply()
+    }
+
+    fun getOnboardingAge(ctx: Context): String =
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+            .getString(KEY_ONBOARDING_AGE, "").orEmpty()
 
     fun seedNickname(ctx: Context, name: String) {
         val prefs = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
@@ -596,6 +650,13 @@ object UserPrefs {
             .orEmpty()
     }
 
+    fun saveProfilePhotoUrl(ctx: Context, url: String) {
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY_PROFILE_PHOTO_URL, url).apply()
+    }
+
+    fun getProfilePhotoUrl(ctx: Context): String =
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).getString(KEY_PROFILE_PHOTO_URL, "").orEmpty()
+
     fun saveHostUploadedStories(
         ctx: Context,
         stories: List<UploadedHostStory>,
@@ -737,6 +798,7 @@ object UserPrefs {
             .putInt(KEY_HOST_VIDEO_RATE, profile.hostVideoRate)
             .putString(KEY_HOST_DISPLAY_NAME, normalizedNickname.ifBlank { profile.username })
             .putString(KEY_HOST_PROFILE_PHOTO_URI, profile.hostProfilePhotoUrl.orEmpty())
+            .putString(KEY_PROFILE_PHOTO_URL, profile.profilePhotoUrl.orEmpty())
             .apply()
 
         saveHostUploadedStories(

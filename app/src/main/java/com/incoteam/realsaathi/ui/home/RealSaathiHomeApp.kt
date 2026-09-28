@@ -749,7 +749,11 @@ private fun DiscoveryHost.toHomeUser(): User {
         hostAudioLive = hostAudioLive,
         hostVideoLive = hostVideoLive,
         publicId = publicId,
-        hostStories = hostStories
+        hostStories = hostStories,
+        avatarId = avatarId,
+        profilePhotoUrl = hostProfilePhotoUrl?.takeIf { it.isNotBlank() }
+            ?: profilePhotoUrl?.takeIf { it.isNotBlank() }
+            ?: avatarUrl
     )
 }
 
@@ -1248,8 +1252,13 @@ private fun MainScaffold(
 
             if (activeCall != null) {
                 Surface(color = AppBg, modifier = Modifier.fillMaxSize()) {
+                    val callProfile = homeUsers.firstOrNull { it.id == activeCall.userId }
                     LiveCallSurface(
-                        activeCall = activeCall,
+                        activeCall = activeCall.copy(
+                            avatarId = callProfile?.avatarId ?: activeCall.avatarId,
+                            profilePhotoUrl = activeCall.profilePhotoUrl?.takeIf(String::isNotBlank)
+                                ?: callProfile?.profilePhotoUrl
+                        ),
                         onEndCall = { durationSeconds ->
                             val finishedCall = CallHistory(
                                 callId = "",
@@ -1745,6 +1754,8 @@ private fun ChatThreadCard(
             ContactChatAvatar(
                 name = thread.title,
                 size = 52.dp,
+                avatarId = previewUser?.avatarId ?: DefaultAvatarId,
+                profilePhotoUrl = previewUser?.profilePhotoUrl,
                 modifier = Modifier.clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -1952,6 +1963,8 @@ private fun ChatConversationScreen(
                     ContactChatAvatar(
                         name = thread.title,
                         size = 36.dp,
+                        avatarId = previewUser?.avatarId ?: DefaultAvatarId,
+                        profilePhotoUrl = previewUser?.profilePhotoUrl,
                         modifier = Modifier.clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
@@ -1997,7 +2010,9 @@ private fun ChatConversationScreen(
                             ActiveCallSession(
                                 userId = thread.id,
                                 name = thread.title,
-                                isVideo = false
+                                isVideo = false,
+                                avatarId = previewUser?.avatarId ?: DefaultAvatarId,
+                                profilePhotoUrl = previewUser?.profilePhotoUrl
                             )
                         )
                     }
@@ -2010,7 +2025,9 @@ private fun ChatConversationScreen(
                             ActiveCallSession(
                                 userId = thread.id,
                                 name = thread.title,
-                                isVideo = true
+                                isVideo = true,
+                                avatarId = previewUser?.avatarId ?: DefaultAvatarId,
+                                profilePhotoUrl = previewUser?.profilePhotoUrl
                             )
                         )
                     }
@@ -2489,34 +2506,16 @@ private fun SupportChatAvatar(
 private fun ContactChatAvatar(
     name: String,
     size: Dp,
+    avatarId: Int = DefaultAvatarId,
+    profilePhotoUrl: String? = null,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    AvatarBubble(
+        avatar = avatarList.firstOrNull { it.id == avatarId } ?: avatarList.first(),
+        size = size,
+        profilePhotoUri = profilePhotoUrl,
         modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(Brush.linearGradient(listOf(Color(0xFFFD1D1D), Color(0xFFFCAF45), Accent2)))
-            .padding(2.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Accent2, CardBgMuted)))
-                .border(
-                    width = 1.dp,
-                    brush = Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.08f), Color.Transparent)),
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = name.take(2).uppercase(),
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -3455,29 +3454,12 @@ private fun HostAvatarPreviewDialog(
                     .padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(250.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Accent1, Accent2, Accent3)))
-                        .padding(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(CardBgMuted, CardBg))),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = user.name.take(2).uppercase(),
-                            color = Color.White,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 72.sp
-                        )
-                    }
-                }
+                AvatarBubble(
+                    avatar = avatarList.firstOrNull { it.id == user.avatarId } ?: avatarList.first(),
+                    size = 250.dp,
+                    highlight = true,
+                    profilePhotoUri = user.profilePhotoUrl
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -3545,15 +3527,12 @@ private fun UserCard(
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Accent1, Accent3)))
-                    .clickable { showAvatarPreview = true },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(user.name.take(2).uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Box(Modifier.size(48.dp).clickable { showAvatarPreview = true }) {
+                AvatarBubble(
+                    avatar = avatarList.firstOrNull { it.id == user.avatarId } ?: avatarList.first(),
+                    size = 48.dp,
+                    profilePhotoUri = user.profilePhotoUrl
+                )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -3601,7 +3580,9 @@ private fun UserCard(
                                 name = user.name,
                                 publicId = user.publicId,
                                 isVideo = false,
-                                ratePerMinute = AudioCallRateCoinsPerMinute
+                                ratePerMinute = AudioCallRateCoinsPerMinute,
+                                avatarId = user.avatarId,
+                                profilePhotoUrl = user.profilePhotoUrl
                             )
                         )
                     }
@@ -3618,7 +3599,9 @@ private fun UserCard(
                                 name = user.name,
                                 publicId = user.publicId,
                                 isVideo = true,
-                                ratePerMinute = VideoCallRateCoinsPerMinute
+                                ratePerMinute = VideoCallRateCoinsPerMinute,
+                                avatarId = user.avatarId,
+                                profilePhotoUrl = user.profilePhotoUrl
                             )
                         )
                     }
@@ -4161,7 +4144,9 @@ private fun HostStoryViewer(
                                             userId = pageStory.user.id,
                                             name = pageStory.user.name,
                                             publicId = pageStory.user.publicId,
-                                            isVideo = false
+                                            isVideo = false,
+                                            avatarId = pageStory.user.avatarId,
+                                            profilePhotoUrl = pageStory.user.profilePhotoUrl
                                         )
                                     )
                                     onClose()
@@ -4176,7 +4161,9 @@ private fun HostStoryViewer(
                                             userId = pageStory.user.id,
                                             name = pageStory.user.name,
                                             publicId = pageStory.user.publicId,
-                                            isVideo = true
+                                            isVideo = true,
+                                            avatarId = pageStory.user.avatarId,
+                                            profilePhotoUrl = pageStory.user.profilePhotoUrl
                                         )
                                     )
                                     onClose()
@@ -4510,7 +4497,9 @@ private fun RemoteWalletTransaction.toWalletTransactionEntry(): WalletTransactio
         },
         title = displayName(title.ifBlank { "Wallet update" }),
         detail = detail,
-        amountText = amountText.ifBlank { if (coinsDelta >= 0) "+$coinsDelta" else "$coinsDelta" },
+        amountText = normalizeCoinAmountText(
+            amountText.ifBlank { if (coinsDelta >= 0) "+$coinsDelta" else "$coinsDelta" }
+        ),
         positive = coinsDelta > 0,
         kind = mappedKind,
         status = when (status.trim().lowercase(Locale.getDefault())) {
@@ -5480,6 +5469,10 @@ private fun WalletTransactionAmountBadge(
             fontWeight = FontWeight.SemiBold
         )
     }
+}
+
+private fun normalizeCoinAmountText(value: String): String {
+    return value.trim().replace(Regex("\\s+coins?$", RegexOption.IGNORE_CASE), "")
 }
 
 private fun monthStartMillis(timestampMillis: Long): Long {
@@ -6506,30 +6499,12 @@ private fun InstagramAudioCallSurface(
 
             Spacer(modifier = Modifier.weight(0.55f))
 
-            Box(
-                modifier = Modifier
-                    .size(170.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Accent1, Accent2)))
-                    .padding(4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(Brush.verticalGradient(listOf(CardBgMuted, AppBg)))
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = activeCall.name.take(2).uppercase(),
-                        color = Color.White,
-                        fontSize = 38.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-            }
+            AvatarBubble(
+                avatar = avatarList.firstOrNull { it.id == activeCall.avatarId } ?: avatarList.first(),
+                size = 170.dp,
+                highlight = true,
+                profilePhotoUri = activeCall.profilePhotoUrl
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -6682,6 +6657,8 @@ private fun InstagramVideoCallSurface(
         } else {
             InstagramVideoRemoteStage(
                 name = activeCall.displayLabel(),
+                avatarId = activeCall.avatarId,
+                profilePhotoUrl = activeCall.profilePhotoUrl,
                 modifier = Modifier.matchParentSize()
             )
         }
@@ -6729,6 +6706,8 @@ private fun InstagramVideoCallSurface(
         if (isSelfPreviewFocused) {
             VideoCallRemoteMiniCard(
                 name = activeCall.displayLabel(),
+                avatarId = activeCall.avatarId,
+                profilePhotoUrl = activeCall.profilePhotoUrl,
                 onClick = onToggleSelfPreviewFocus,
                 modifier = floatingPreviewModifier
             )
@@ -6933,27 +6912,20 @@ private fun CallHeaderInfo(
 @Composable
 private fun InstagramVideoRemoteStage(
     name: String,
+    avatarId: Int,
+    profilePhotoUrl: String?,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(164.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Accent1, Accent2)))
-                .border(2.dp, Color.White.copy(alpha = 0.14f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = name.take(2).uppercase(),
-                color = Color.White,
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Black
-            )
-        }
+        AvatarBubble(
+            avatar = avatarList.firstOrNull { it.id == avatarId } ?: avatarList.first(),
+            size = 164.dp,
+            highlight = true,
+            profilePhotoUri = profilePhotoUrl,
+            modifier = Modifier.align(Alignment.Center)
+        )
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -7138,6 +7110,8 @@ private fun FaceCountdownOverlay(
 @Composable
 private fun VideoCallRemoteMiniCard(
     name: String,
+    avatarId: Int,
+    profilePhotoUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -7165,22 +7139,12 @@ private fun VideoCallRemoteMiniCard(
                     )
                 )
         )
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(66.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Accent1, Accent2)))
-                .border(1.dp, Color.White.copy(alpha = 0.16f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = name.take(2).uppercase(),
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black
-            )
-        }
+        AvatarBubble(
+            avatar = avatarList.firstOrNull { it.id == avatarId } ?: avatarList.first(),
+            size = 66.dp,
+            profilePhotoUri = profilePhotoUrl,
+            modifier = Modifier.align(Alignment.Center)
+        )
         Text(
             text = name,
             color = Color.White,

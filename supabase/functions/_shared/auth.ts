@@ -300,6 +300,7 @@ export function buildProfilePayload(userRow: Record<string, unknown>) {
     hostAudioEarningPerMinute: hostEarningRate(hostRank, false),
     hostVideoEarningPerMinute: hostEarningRate(hostRank, true),
     hostProfilePhotoUrl: String(userRow.host_profile_photo_url ?? "").trim(),
+    profilePhotoUrl: String(userRow.profile_photo_url ?? "").trim(),
     hostStories,
   };
 }

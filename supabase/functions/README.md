@@ -12,6 +12,7 @@ This folder contains the Edge Functions used by the Android app in `supabase_edg
 - `get-host-dashboard`
 - `save-host-settings`
 - `upload-host-media`
+- `account-verification` stores listener voice samples privately and returns the review status.
 - `config-tags`, `config-languages`
 - `discovery-hosts`, `random-match`
 - `report-user`, `unblock-user`
@@ -50,6 +51,7 @@ supabase functions deploy support-chat --no-verify-jwt
 supabase functions deploy get-host-dashboard --no-verify-jwt
 supabase functions deploy save-host-settings --no-verify-jwt
 supabase functions deploy upload-host-media --no-verify-jwt
+supabase functions deploy account-verification --no-verify-jwt
 supabase functions deploy config-tags --no-verify-jwt
 supabase functions deploy config-languages --no-verify-jwt
 supabase functions deploy discovery-hosts --no-verify-jwt
@@ -66,6 +68,8 @@ Keep gateway JWT verification disabled on deploy, otherwise Supabase will reject
 before the function code runs with `UNAUTHORIZED_NO_AUTH_HEADER` / `Missing authorization header`.
 
 ## Schema
+
+Apply `20260927083125_account_voice_verification.sql` before deploying `account-verification` or using the updated Android onboarding/admin review flow. The migration creates a private audio bucket and grants review access through the existing `kyc` admin permission.
 
 Apply the host/profile upgrade SQL before using the host dashboard flow:
 

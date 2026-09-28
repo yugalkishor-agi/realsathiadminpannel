@@ -2,10 +2,16 @@
 
 package com.incoteam.realsaathi.ui.home
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.media.MediaPlayer
+import android.media.MediaRecorder
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,6 +33,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -59,11 +67,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -88,6 +98,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -104,6 +115,7 @@ import com.incoteam.realsaathi.data.model.auth.SaveProfileRequest
 import com.incoteam.realsaathi.data.model.auth.SubmitFeedbackRequest
 import com.incoteam.realsaathi.data.model.auth.ReportUserRequest
 import com.incoteam.realsaathi.data.model.auth.UserReportEntry
+import java.io.File
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -268,14 +280,15 @@ fun ProfileScreen(
             )
         }
 
-        ProfileRoute.EditProfile -> EditProfileScreen(
+    ProfileRoute.EditProfile -> EditProfileScreen(
             onBack = {
                 profileRefresh++
                 screen = ProfileRoute.Profile
                 onInnerBack()
             },
             onProfileUpdated = onProfileUpdated,
-            isSetupFlow = forceEditProfileOnLaunch
+            isSetupFlow = forceEditProfileOnLaunch,
+            onHelp = { screen = ProfileRoute.Help; onInnerNavigate() }
         )
         ProfileRoute.Wallet -> {
             LaunchedEffect(Unit) {
@@ -330,7 +343,7 @@ fun ProfileScreen(
         ProfileRoute.Help -> HelpSupportScreen(
             sessionManager = sessionManager,
             onBack = {
-                screen = ProfileRoute.Profile
+                screen = if (forceEditProfileOnLaunch) ProfileRoute.EditProfile else ProfileRoute.Profile
                 onInnerBack()
             },
             onFaqs = {
@@ -822,15 +835,6 @@ private fun ReportsScreen(
 private fun DeleteAccountScreen(onBack: () -> Unit, onConfirmDelete: () -> Unit) {
     val context = LocalContext.current
     val app = remember(context) { context.applicationContext as RealSaathiApp }
-    val reasons = listOf(
-        "Call quality was poor",
-        "The conversation felt uncomfortable",
-        "I found a better app",
-        "The experience was not useful",
-        "I have privacy concerns",
-        "Other"
-    )
-    var selectedReason by rememberSaveable { mutableStateOf<String?>(null) }
     var showConfirmSheet by rememberSaveable { mutableStateOf(false) }
     var deletePhase by rememberSaveable { mutableStateOf("idle") }
 
@@ -840,6 +844,8 @@ private fun DeleteAccountScreen(onBack: () -> Unit, onConfirmDelete: () -> Unit)
         if (deletePhase == "processing") {
             app.authRepository.deleteAccount(app.sessionManager.getAccessToken())
                 .onSuccess {
+                    UserPrefs.clearAccountData(context)
+                    app.sessionManager.logout()
                     deletePhase = "deleted"
                 }
                 .onFailure { error ->
@@ -915,39 +921,25 @@ private fun DeleteAccountScreen(onBack: () -> Unit, onConfirmDelete: () -> Unit)
                 }
             }
             Spacer(Modifier.height(24.dp))
-            Text("Why are you leaving?", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Spacer(Modifier.height(12.dp))
-            SupportChipWrap {
-                reasons.forEach { reason ->
-                    SupportChoiceChip(
-                        label = reason,
-                        selected = selectedReason == reason,
-                        onClick = { selectedReason = reason }
-                    )
-                }
-            }
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = { showConfirmSheet = true },
-                enabled = selectedReason != null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = DangerRed,
-                    disabledContainerColor = DangerRed.copy(alpha = 0.3f),
-                    disabledContentColor = Color.White.copy(alpha = 0.72f)
+                    disabledContainerColor = DangerRed.copy(alpha = 0.3f)
                 )
             ) {
-                Text("Continue", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Delete account", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
             Spacer(Modifier.height(20.dp))
         }
 
-        if (showConfirmSheet && selectedReason != null) {
-            DeleteAccountConfirmSheet(
-                reason = selectedReason.orEmpty(),
+        if (showConfirmSheet) {
+            AccountDeleteConfirmDialog(
                 onCancel = { showConfirmSheet = false },
                 onConfirm = {
                     showConfirmSheet = false
@@ -980,110 +972,56 @@ private fun DeleteAccountInfoRow(text: String) {
 }
 
 @Composable
-private fun DeleteAccountConfirmSheet(
-    reason: String,
+internal fun AccountDeleteConfirmDialog(
     onCancel: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.62f))
-    ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onCancel() }
-        )
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            CardBgMuted.copy(alpha = 0.99f),
-                            AppBg.copy(alpha = 0.99f)
+    var selectedReason by rememberSaveable { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Do you want to delete your profile?", color = Color.White, fontWeight = FontWeight.SemiBold) },
+        text = {
+            Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
+                Text("This permanently deletes your account. Choose a reason to continue.", color = TextSubtle)
+                Spacer(Modifier.height(12.dp))
+                AccountDeletionReasons.forEach { reason ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                            .clickable { selectedReason = reason }.padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedReason == reason,
+                            onClick = { selectedReason = reason },
+                            colors = RadioButtonDefaults.colors(selectedColor = Accent2)
                         )
-                    )
-                )
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
-                )
-                .padding(horizontal = 22.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(44.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Color.White.copy(alpha = 0.18f))
-            )
-            Box(
-                modifier = Modifier
-                    .size(62.dp)
-                    .clip(CircleShape)
-                    .background(DangerRed.copy(alpha = 0.16f))
-                    .border(1.dp, DangerRed.copy(alpha = 0.34f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Warning, null, tint = Color.White, modifier = Modifier.size(28.dp))
+                        Text(reason, color = Color.White, fontSize = 13.sp)
+                    }
+                }
             }
-            Text(
-                text = "Confirm account deletion",
-                color = Color.White,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Selected reason",
-                color = TextSubtle,
-                fontSize = 11.sp
-            )
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Color.White.copy(alpha = 0.05f))
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(999.dp))
-                    .padding(horizontal = 14.dp, vertical = 8.dp)
-            ) {
-                Text(reason, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = selectedReason.isNotBlank()) {
+                Text("Delete profile", color = DangerRed, fontWeight = FontWeight.SemiBold)
             }
-            Text(
-                text = "After confirming, your RealSaathi account will be deleted and you will be logged out.",
-                color = TextSubtle,
-                fontSize = 13.sp,
-                lineHeight = 19.sp,
-                textAlign = TextAlign.Center
-            )
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
-            ) {
-                Text("Delete account", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-            Text(
-                text = "Cancel",
-                color = TextSubtle,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable { onCancel() }
-            )
-        }
-    }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) { Text("Cancel", color = TextSubtle) }
+        },
+        containerColor = CardBg,
+        titleContentColor = Color.White,
+        textContentColor = TextSubtle
+    )
 }
+
+private val AccountDeletionReasons = listOf(
+    "Call quality was poor",
+    "The conversation felt uncomfortable",
+    "I found a better app",
+    "The experience was not useful",
+    "I have privacy concerns",
+    "Other"
+)
 
 @Composable
 private fun DeleteAccountStatusScreen(
@@ -1170,6 +1108,7 @@ private fun ProfileHome(
     val nickname = safeProfileValue(UserPrefs.getNickname(context), "realsaathi_user")
     val phone = safeProfileValue(sessionManager.getPhoneNumber(), "Not added")
     val avatar = avatarList.firstOrNull { it.id == UserPrefs.getAvatar(context) } ?: avatarList.first()
+    val profilePhoto = rememberProfilePhotoBitmap(UserPrefs.getProfilePhotoUrl(context))
     ProfilePageScaffold(
         title = "",
         onBack = {},
@@ -1190,7 +1129,8 @@ private fun ProfileHome(
                 .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(24.dp))
                 .padding(horizontal = 18.dp, vertical = 20.dp)
         ) {
-            AvatarBubble(avatar = avatar, size = 64.dp)
+            if (profilePhoto != null) Image(profilePhoto, contentDescription = "Profile photo", contentScale = ContentScale.Crop,
+                modifier = Modifier.size(64.dp).clip(CircleShape)) else AvatarBubble(avatar = avatar, size = 64.dp)
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(nickname, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -1556,12 +1496,13 @@ internal fun ProfilePageScaffold(
     showBackButton: Boolean = true,
     showHeader: Boolean = true,
     modifier: Modifier = Modifier,
+    backgroundBrush: Brush = Brush.verticalGradient(listOf(CardBgMuted, AppBg, AppBg)),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(CardBgMuted, AppBg, AppBg)))
+            .background(backgroundBrush)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -1963,12 +1904,14 @@ internal fun EditProfileScreen(
     isSetupFlow: Boolean = false,
     isHostProfile: Boolean = false,
     hostProfilePhotoUri: String = "",
-    onHostProfilePhotoClick: () -> Unit = {}
+    onHostProfilePhotoClick: () -> Unit = {},
+    onHelp: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val app = remember(context) { context.applicationContext as RealSaathiApp }
     val authRepository = remember(app) { app.authRepository }
     val sessionManager = remember(app) { app.sessionManager }
+    val scope = rememberCoroutineScope()
     var topicOptions by remember { mutableStateOf(UserPrefs.getTopicOptions(context)) }
     var languageOptions by remember { mutableStateOf(UserPrefs.getConfiguredLanguages(context, includeAll = false)) }
     val storedNickname = safeProfileValue(UserPrefs.getNickname(context), "realsaathi_user")
@@ -1977,6 +1920,7 @@ internal fun EditProfileScreen(
         sessionManager.getPublicId()
     )
     val storedAvatar = UserPrefs.getAvatar(context)
+    val storedProfilePhotoUrl = UserPrefs.getProfilePhotoUrl(context)
     val rawStoredGender = UserPrefs.getGender(context)
     val storedGender = rawStoredGender.ifBlank { "Female" }
     val storedInterests = UserPrefs.getInterests(context)
@@ -1996,12 +1940,15 @@ internal fun EditProfileScreen(
     val setupStepFemaleChoice = "setup_female_choice"
     val setupStepCommunityIntro = "setup_community_intro"
     val setupStepCommunityDetails = "setup_community_details"
+    val setupStepVoice = "setup_voice_verification"
+    val setupStepVerification = "setup_verification_progress"
     val setupStepForm = "setup_form"
     val accountModeCustomer = "customer"
     val accountModeCommunity = "community"
 
     var nickname by rememberSaveable { mutableStateOf(storedNickname) }
     var selectedAvatar by rememberSaveable { mutableStateOf(storedAvatar) }
+    var profilePhotoUrl by rememberSaveable { mutableStateOf(storedProfilePhotoUrl) }
     var selectedInterests by rememberSaveable { mutableStateOf(storedInterests) }
     var selectedGender by rememberSaveable {
         mutableStateOf(
@@ -2037,16 +1984,41 @@ internal fun EditProfileScreen(
         mutableStateOf(storedCommunityExperience.ifBlank { communityExperienceOptions.first() })
     }
     var communityLanguage by rememberSaveable { mutableStateOf(storedLanguage) }
-    var setupAge by rememberSaveable { mutableStateOf("") }
+    var setupAge by rememberSaveable { mutableStateOf(UserPrefs.getOnboardingAge(context)) }
+    var verificationMessage by rememberSaveable { mutableStateOf("") }
+    var recordedVoicePath by rememberSaveable { mutableStateOf("") }
+    var voiceSubmitting by rememberSaveable { mutableStateOf(false) }
+    var voiceRecording by remember { mutableStateOf(false) }
+    var voicePlaying by remember { mutableStateOf(false) }
+    val voicePrompts = remember { listOf("क्या हाल है बताएं", "जूस पिला दो मुसम्मी का", "अजी ई गाली दे रहा है", "मुझे घर जाना ह", "जल्दी कर, कल सुबह पनवेल जाना है").shuffled() }
+    var voicePromptIndex by rememberSaveable { mutableStateOf(0) }
+    val voiceRecorder = remember(context) { AccountVoiceRecorder(context) }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { selectedUri ->
+        if (selectedUri != null) {
+            val token = sessionManager.getAccessToken()
+            scope.launch {
+                val upload = runCatching {
+                    val photoFile = File.createTempFile("account_photo_", ".jpg", context.cacheDir)
+                    context.contentResolver.openInputStream(selectedUri)?.use { input -> photoFile.outputStream().use { output -> input.copyTo(output) } }
+                        ?: error("Could not read selected photo")
+                    val mime = context.contentResolver.getType(selectedUri) ?: "image/jpeg"
+                    authRepository.uploadHostMedia(token, photoFile, mime, "onboarding_photo").getOrThrow().publicUrl
+                }
+                upload.onSuccess { url -> profilePhotoUrl = url; UserPrefs.saveProfilePhotoUrl(context, url) }
+                    .onFailure { toast(context, it.message ?: "Photo upload nahi ho paayi") }
+            }
+        }
+    }
     var setupStep by rememberSaveable {
         mutableStateOf(
             if (!isSetupFlow) {
                 setupStepForm
             } else {
-                when {
+                sessionManager.getHostOnboardingStep().takeIf { it.isNotBlank() } ?: when {
                     rawStoredGender.equals("Male", ignoreCase = true) -> setupStepLanguage
                     rawStoredGender.equals("Female", ignoreCase = true) &&
-                        storedAccountMode == accountModeCommunity -> setupStepCommunityDetails
+                        storedAccountMode == accountModeCommunity -> setupStepVoice
                     rawStoredGender.equals("Female", ignoreCase = true) -> setupStepLanguage
                     else -> setupStepGender
                 }
@@ -2054,6 +2026,48 @@ internal fun EditProfileScreen(
         )
     }
     var updatePhase by rememberSaveable { mutableStateOf("idle") }
+
+    LaunchedEffect(
+        isSetupFlow, setupStep, selectedGender, selectedLanguage, selectedAccountMode,
+        selectedAvatar, selectedInterests, setupAge, profilePhotoUrl, communityName,
+        communityCity, communityAbout, communityExperience
+    ) {
+        if (isSetupFlow && selectedAccountMode == accountModeCommunity) {
+            sessionManager.saveHostOnboardingStep(setupStep)
+            UserPrefs.saveAccountMode(context, accountModeCommunity)
+            selectedGender.takeIf { it.isNotBlank() }?.let { UserPrefs.saveGender(context, it) }
+            UserPrefs.saveLanguage(context, selectedLanguage)
+            UserPrefs.saveAvatar(context, selectedAvatar)
+            UserPrefs.saveInterests(context, selectedInterests)
+            UserPrefs.saveOnboardingAge(context, setupAge)
+            UserPrefs.saveProfilePhotoUrl(context, profilePhotoUrl)
+            UserPrefs.saveCommunityDetails(context, communityName, communityCity, communityAbout, communityExperience)
+        }
+    }
+
+    LaunchedEffect(isSetupFlow) {
+        if (!isSetupFlow) return@LaunchedEffect
+        val status = authRepository.getAccountVoiceVerification(sessionManager.getAccessToken()).getOrNull() ?: return@LaunchedEffect
+        val metadata = status.metadata
+        if (metadata.isNotEmpty()) {
+            setupAge = metadata["age"]?.toString().orEmpty()
+            selectedInterests = (metadata["interests"] as? List<*>)?.mapNotNull { it?.toString() }.orEmpty()
+            (metadata["avatarId"] as? Number)?.toInt()?.let { selectedAvatar = it }
+            metadata["language"]?.toString()?.takeIf { it.isNotBlank() }?.let { selectedLanguage = it }
+            metadata["profilePhotoUrl"]?.toString()?.takeIf { it.isNotBlank() }?.let { profilePhotoUrl = it }
+            selectedGender = "Female"
+            selectedAccountMode = accountModeCommunity
+        }
+        verificationMessage = status.reviewMessage
+        setupStep = when (status.status) {
+            "pending" -> setupStepVerification
+            "approved" -> { selectedGender = "Female"; selectedAccountMode = accountModeCommunity; setupStepCommunityDetails }
+            "rejected" -> setupStepVoice
+            else -> setupStep
+        }
+    }
+
+    DisposableEffect(voiceRecorder) { onDispose { voiceRecorder.release() } }
 
     LaunchedEffect(Unit) {
         authRepository.getTopicTags().onSuccess { response ->
@@ -2074,7 +2088,7 @@ internal fun EditProfileScreen(
     }
     val onboardingGender = if (selectedGender == "Female") "Female" else "Male"
     val totalSetupSteps = when {
-        selectedGender == "Female" && selectedAccountMode == accountModeCommunity -> 6
+        selectedGender == "Female" && selectedAccountMode == accountModeCommunity -> 7
         selectedGender == "Female" -> 4
         else -> 3
     }
@@ -2083,7 +2097,9 @@ internal fun EditProfileScreen(
         setupStepLanguage -> 2
         setupStepFemaleChoice -> 3
         setupStepCommunityIntro -> 4
-        setupStepCommunityDetails -> 5
+        setupStepVoice -> 5
+        setupStepVerification -> 6
+        setupStepCommunityDetails -> 7
         else -> totalSetupSteps
     }
 
@@ -2100,7 +2116,9 @@ internal fun EditProfileScreen(
                 }
                 setupStepFemaleChoice -> setupStep = setupStepLanguage
                 setupStepCommunityIntro -> setupStep = setupStepFemaleChoice
-                setupStepCommunityDetails -> setupStep = setupStepCommunityIntro
+                setupStepVoice -> setupStep = setupStepCommunityIntro
+                setupStepVerification -> Unit
+                setupStepCommunityDetails -> setupStep = setupStepVerification
                 setupStepForm -> {
                     setupStep = when {
                         selectedGender == "Female" && selectedAccountMode == accountModeCommunity -> {
@@ -2123,9 +2141,21 @@ internal fun EditProfileScreen(
     val initialPage = avatarList.indexOfFirst { it.id == selectedAvatar }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { avatarList.size })
 
+    val setupAvatars = remember(onboardingGender) {
+        avatarList.filter { if (onboardingGender == "Female") it.id in 20..22 else it.id in 30..35 }
+    }
+    val setupPagerState = rememberPagerState(
+        initialPage = setupAvatars.indexOfFirst { it.id == selectedAvatar }.coerceAtLeast(0),
+        pageCount = { setupAvatars.size }
+    )
+
     LaunchedEffect(pagerState.currentPage) {
         selectedAvatar = avatarList[pagerState.currentPage].id
     }
+    LaunchedEffect(setupPagerState.currentPage, onboardingGender) {
+        setupAvatars.getOrNull(setupPagerState.currentPage)?.let { selectedAvatar = it.id }
+    }
+    LaunchedEffect(onboardingGender) { setupPagerState.scrollToPage(0) }
 
     val cleanedNickname = if (isHostProfile) {
         normalizeHostDisplayName(nickname)
@@ -2211,7 +2241,8 @@ internal fun EditProfileScreen(
                     communityName = communityName,
                     communityCity = communityCity,
                     communityAbout = communityAbout,
-                    communityExperience = communityExperience
+                    communityExperience = communityExperience,
+                    age = setupAge.toIntOrNull()
                 )
             ).onSuccess { response ->
                 UserPrefs.syncFromRemoteProfile(context, response.profile)
@@ -2281,17 +2312,27 @@ internal fun EditProfileScreen(
                     modifier = Modifier.padding(horizontal = 40.dp)
                 )
                 Spacer(Modifier.height(30.dp))
+                if (onboardingGender == "Female") {
+                    OutlinedButton(onClick = { photoPicker.launch("image/*") }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (profilePhotoUrl.isBlank()) "Add your profile photo (optional)" else "Profile photo added · Change")
+                    }
+                    rememberProfilePhotoBitmap(profilePhotoUrl)?.let { bitmap ->
+                        Image(bitmap, contentDescription = "Selected profile photo", contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(76.dp).align(Alignment.CenterHorizontally).clip(CircleShape))
+                    }
+                    Spacer(Modifier.height(10.dp))
+                }
                 HorizontalPager(
-                    state = pagerState,
+                    state = setupPagerState,
                     pageSpacing = 18.dp,
                     contentPadding = PaddingValues(horizontal = 68.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
                 ) { page ->
-                    val avatar = avatarList[page]
+                    val avatar = setupAvatars[page]
                     val pageOffset =
-                        ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).absoluteValue
+                        ((setupPagerState.currentPage - page) + setupPagerState.currentPageOffsetFraction).absoluteValue
                     val isFocused = pageOffset < 0.55f
                     val scale = lerp(0.76f, 1f, 1f - pageOffset.coerceIn(0f, 1f))
                     Box(
@@ -2312,7 +2353,7 @@ internal fun EditProfileScreen(
                 }
                 Spacer(Modifier.height(24.dp))
                 Text(
-                    text = "Gender can't be changed later",
+                        text = if (profilePhotoUrl.isBlank()) "Swipe to choose an avatar if you skip your photo" else "Your photo is saved; you can still choose an avatar",
                     color = Color.White.copy(alpha = 0.78f),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
@@ -2323,8 +2364,10 @@ internal fun EditProfileScreen(
                     onClick = {
                         if (onboardingGender == "Female") {
                             selectedGender = "Female"
+                            UserPrefs.saveGender(context, "Female")
                         } else {
                             selectedGender = "Male"
+                            UserPrefs.saveGender(context, "Male")
                             selectedAccountMode = accountModeCustomer
                         }
                         setupStep = setupStepLanguage
@@ -2387,8 +2430,8 @@ internal fun EditProfileScreen(
                 ) {
                     setupLanguageOptions.forEach { language ->
                         ProfileSetupLanguageCard(
-                            title = language.key,
-                            script = language.label,
+                            title = language.label,
+                            script = languageGraphicEmoji(language.key),
                             selected = selectedLanguage == language.key,
                             onClick = {
                                 selectedLanguage = language.key
@@ -2443,47 +2486,52 @@ internal fun EditProfileScreen(
                     )
                 )
                 .statusBarsPadding()
+                .navigationBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 RealSaathiBackHeader(title = "Choose your experience", onBack = handleBack)
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "Choose how you want to begin. You can complete your setup in a few quick steps.",
-                    color = Color.White.copy(alpha = 0.82f),
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp
-                )
-                Spacer(Modifier.height(26.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(346.dp),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = "Meet people or become a listener and earn from conversations.",
+                        color = Color.White.copy(alpha = 0.82f),
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp
+                    )
                     ProfileSetupUsageChoiceCard(
-                        title = "Make new\nfriends",
-                        subtitle = "Meet people, have real conversations.",
-                        imageRes = R.drawable.avatar_ai_9,
+                        title = "Make new friends",
+                        subtitle = "Meet people and enjoy real conversations.",
+                        imageRes = R.drawable.onboarding_make_new_friends,
                         selected = selectedAccountMode == accountModeCustomer,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth().height(132.dp),
                         onClick = { selectedAccountMode = accountModeCustomer }
                     )
                     ProfileSetupUsageChoiceCard(
                         title = "Earn money",
-                        subtitle = "Support others and earn along the way.",
-                        imageRes = R.drawable.avatar_ai_10,
+                        subtitle = "Become a listener; verification is required before going live.",
+                        imageRes = R.drawable.onboarding_earn_money,
                         selected = selectedAccountMode == accountModeCommunity,
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedAccountMode = accountModeCommunity }
+                        modifier = Modifier.fillMaxWidth().height(132.dp),
+                        onClick = {
+                            selectedAccountMode = accountModeCommunity
+                            UserPrefs.saveAccountMode(context, accountModeCommunity)
+                            sessionManager.saveHostOnboardingStep(setupStepFemaleChoice)
+                        }
                     )
                 }
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(10.dp))
                 Button(
                     onClick = {
                         setupStep = if (selectedAccountMode == accountModeCommunity) {
+                            sessionManager.saveHostOnboardingStep(setupStepCommunityIntro)
                             setupStepCommunityIntro
                         } else {
+                            sessionManager.clearHostOnboarding()
+                            UserPrefs.saveAccountMode(context, accountModeCustomer)
                             setupStepForm
                         }
                     },
@@ -2503,7 +2551,7 @@ internal fun EditProfileScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(6.dp))
             }
         }
         return
@@ -2620,7 +2668,7 @@ internal fun EditProfileScreen(
                             toast(context, "Select at least 1 topic")
                             return@Button
                         }
-                        setupStep = setupStepCommunityDetails
+                        setupStep = setupStepVoice
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2644,11 +2692,110 @@ internal fun EditProfileScreen(
         return
     }
 
+    if (isSetupFlow && setupStep == setupStepVoice) {
+        val prompt = voicePrompts[voicePromptIndex.coerceIn(0, voicePrompts.lastIndex)]
+        VoiceVerificationScreen(
+            prompt = prompt,
+            reviewMessage = verificationMessage,
+            recording = voiceRecording,
+            playing = voicePlaying,
+            hasRecording = recordedVoicePath.isNotBlank() && File(recordedVoicePath).exists(),
+            submitting = voiceSubmitting,
+            onBack = handleBack,
+            onHold = {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                } else {
+                    voiceRecorder.stopPlayback()
+                    voicePlaying = false
+                    voiceRecording = voiceRecorder.start()
+                    if (!voiceRecording) toast(context, "Recording start nahi ho paayi. Dobara try karein.")
+                }
+            },
+            onRelease = {
+                if (voiceRecording) {
+                    recordedVoicePath = voiceRecorder.stop()?.absolutePath.orEmpty()
+                    voiceRecording = false
+                }
+            },
+            onPlay = {
+                runCatching {
+                    voicePlaying = true
+                    voiceRecorder.play(File(recordedVoicePath)) { voicePlaying = false }
+                }.onFailure { voicePlaying = false; toast(context, it.message ?: "Recording play nahi ho paayi") }
+            },
+            onStopPlay = { voiceRecorder.stopPlayback(); voicePlaying = false },
+            onRetake = { voiceRecorder.stopPlayback(); voicePlaying = false; File(recordedVoicePath).delete(); recordedVoicePath = "" },
+            onSubmit = {
+                val token = sessionManager.getAccessToken()
+                val voiceFile = File(recordedVoicePath)
+                if (token.isBlank() || !voiceFile.exists()) { toast(context, "Please record your voice first"); return@VoiceVerificationScreen }
+                voiceSubmitting = true
+                UserPrefs.saveGender(context, "Female")
+                UserPrefs.saveAvatar(context, selectedAvatar)
+                UserPrefs.saveLanguage(context, selectedLanguage)
+                UserPrefs.saveInterests(context, selectedInterests)
+                UserPrefs.saveAccountMode(context, accountModeCommunity)
+                scope.launch {
+                    authRepository.submitAccountVoiceVerification(token, voiceFile, prompt, mapOf(
+                        "age" to setupAge, "interests" to selectedInterests, "gender" to "Female",
+                        "language" to selectedLanguage, "avatarId" to selectedAvatar,
+                        "profilePhotoUrl" to profilePhotoUrl, "accountName" to storedNickname
+                    )).onSuccess { verificationMessage = it.reviewMessage; setupStep = setupStepVerification }
+                        .onFailure { toast(context, it.message ?: "Verification submit nahi ho paayi") }
+                    voiceSubmitting = false
+                }
+            }
+        )
+        return
+    }
+
+    if (isSetupFlow && setupStep == setupStepVerification) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                val status = authRepository.getAccountVoiceVerification(sessionManager.getAccessToken()).getOrNull()
+                if (status == null) {
+                    delay(7_000)
+                    continue
+                }
+                verificationMessage = status.reviewMessage
+                if (status.status == "approved") {
+                    selectedGender = "Female"
+                    selectedAccountMode = accountModeCommunity
+                    setupStep = setupStepCommunityDetails
+                    break
+                }
+                if (status.status == "rejected") {
+                    setupStep = setupStepVoice
+                    break
+                }
+                delay(7_000)
+            }
+        }
+        VerificationProgressScreen(
+            message = verificationMessage,
+            onHelp = onHelp,
+            onCustomer = {
+                sessionManager.clearHostOnboarding()
+                UserPrefs.saveAccountMode(context, accountModeCustomer)
+                selectedAccountMode = accountModeCustomer
+                setupStep = setupStepForm
+            }
+        )
+        return
+    }
+
     if (isSetupFlow && setupStep == setupStepCommunityDetails) {
-        val communityDetailsValid =
-            communityName.trim().length >= 2 &&
-                communityCity.trim().length >= 2 &&
-                communityAbout.trim().length >= 20
+        val communityDetailsMessage = when {
+            communityName.trim().length < 2 -> "Enter your name to continue."
+            communityCity.trim().length < 2 -> "Enter your city to continue."
+            communityAbout.isBlank() -> "Add a short intro to continue."
+            else -> "Ready to continue."
+        }
+        val communityDetailsValid = communityDetailsMessage == "Ready to continue."
+        val communityPhoto = rememberProfilePhotoBitmap(profilePhotoUrl)
+        val communityAvatar = avatarList.firstOrNull { it.id == selectedAvatar && it.id in 20..22 }?.imageRes
+            ?: R.drawable.onboarding_female_avatar1
 
         ProfilePageScaffold(
             title = "Community Details",
@@ -2673,16 +2820,13 @@ internal fun EditProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.avatar_ai_9),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(92.dp)
-                            .clip(RoundedCornerShape(24.dp)),
-                        contentScale = ContentScale.Crop
-                    )
+                    if (communityPhoto != null) {
+                        Image(communityPhoto, "Your profile photo", Modifier.size(92.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                    } else {
+                        Image(painterResource(communityAvatar), "Selected profile avatar", Modifier.size(92.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                    }
                     Text(
-                        text = "Complete these details once, then we will take you to the main profile setup screen.",
+                        text = "Your listener profile",
                         color = TextSubtle,
                         fontSize = 12.sp,
                         lineHeight = 18.sp,
@@ -2779,11 +2923,7 @@ internal fun EditProfileScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = if (communityDetailsValid) {
-                        "Looks good. You can continue to the main profile setup."
-                    } else {
-                        "Add your name, city, and at least a short intro before continuing."
-                    },
+                    text = communityDetailsMessage,
                     color = if (communityDetailsValid) TextSubtle else DangerRed,
                     fontSize = 12.sp
                 )
@@ -2792,7 +2932,7 @@ internal fun EditProfileScreen(
             Button(
                 onClick = {
                     if (!communityDetailsValid) {
-                        toast(context, "Please complete your community details")
+                        toast(context, communityDetailsMessage)
                         return@Button
                     }
                     selectedLanguage = communityLanguage
@@ -2831,6 +2971,15 @@ internal fun EditProfileScreen(
                 selectedAccountMode == accountModeCommunity -> "Final listener profile step"
                 else -> "Final customer profile step"
             }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                AvatarBubble(
+                    avatar = avatarList.firstOrNull { it.id == selectedAvatar } ?: avatarList.first(),
+                    size = 84.dp,
+                    highlight = true,
+                    profilePhotoUri = profilePhotoUrl
+                )
+            }
+            Spacer(Modifier.height(14.dp))
             ProfileSetupHeroCard(
                 badgeText = "Almost done",
                 title = "Finish your RealSaathi profile",
@@ -3559,7 +3708,6 @@ private fun ProfileSetupUsageChoiceCard(
 ) {
     Box(
         modifier = modifier
-            .fillMaxHeight()
             .clip(RoundedCornerShape(24.dp))
             .background(
                 Brush.verticalGradient(
@@ -3575,45 +3723,38 @@ private fun ProfileSetupUsageChoiceCard(
                 shape = RoundedCornerShape(24.dp)
             )
             .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 16.dp)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 23.sp
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = subtitle,
-                color = Color.White.copy(alpha = 0.88f),
-                fontSize = 12.sp,
-                lineHeight = 17.sp
-            )
-            Spacer(Modifier.weight(1f))
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                if (selected) {
+                    Row(
+                        modifier = Modifier.clip(RoundedCornerShape(999.dp))
+                            .background(Color.White.copy(alpha = 0.16f))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Selected", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                Text(title, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, lineHeight = 21.sp)
+                Text(subtitle, color = Color.White.copy(alpha = 0.88f), fontSize = 12.sp, lineHeight = 16.sp)
+            }
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(170.dp)
+                    .width(94.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(18.dp))
             ) {
-                ProfileSetupChatBubble(
-                    modifier = Modifier.align(Alignment.TopStart)
-                )
-                ProfileSetupChatBubble(
-                    compact = true,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(y = 20.dp)
-                )
                 Image(
                     painter = painterResource(id = imageRes),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(134.dp)
+                        .height(88.dp)
                         .clip(RoundedCornerShape(18.dp)),
                     contentScale = ContentScale.Crop
                 )
@@ -3647,31 +3788,6 @@ private fun ProfileSetupInterestChip(
             color = Color.White,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-private fun ProfileSetupChatBubble(
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = if (compact) 0.20f else 0.14f))
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = if (compact) 14.dp else 16.dp, vertical = 10.dp)
-    ) {
-        Text(
-            text = "••••",
-            color = Color.White.copy(alpha = 0.82f),
-            fontSize = if (compact) 13.sp else 15.sp,
-            letterSpacing = 1.sp
         )
     }
 }
@@ -4231,17 +4347,18 @@ private fun LanguageOptionCard(
 private fun languageGraphicEmoji(languageKey: String): String {
     return when (languageKey) {
         "Hindi" -> "🪔"
-        "Marathi" -> "🌺"
-        "Gujarati" -> "🪷"
-        "Marwadi" -> "🐪"
-        "Tamil" -> "🌸"
-        "Telugu" -> "🎶"
-        "Kannada" -> "☕"
-        "Malayalam" -> "🌴"
-        "Odia" -> "🐚"
-        "Bengali" -> "🌼"
-        "Punjabi" -> "🌾"
         "English" -> "✨"
+        "Telugu" -> "❤️‍🔥"
+        "Tamil" -> "🌺"
+        "Kannada" -> "🪷"
+        "Malayalam" -> "🌴"
+        "Marathi" -> "🚩"
+        "Bengali" -> "🌸"
+        "Gujarati" -> "🦁"
+        "Punjabi" -> "🪯"
+        "Urdu" -> "🌙"
+        "Marwadi" -> "🐪"
+        "Odia" -> "🐚"
         else -> "🌍"
     }
 }
@@ -4443,7 +4560,14 @@ private suspend fun loadProfilePhotoBitmap(
 }
 
 @Composable
-internal fun AvatarBubble(avatar: Avatar, size: Dp, highlight: Boolean = false) {
+internal fun AvatarBubble(
+    avatar: Avatar,
+    size: Dp,
+    highlight: Boolean = false,
+    profilePhotoUri: String? = null,
+    modifier: Modifier = Modifier
+) {
+    val profilePhoto = rememberProfilePhotoBitmap(profilePhotoUri.orEmpty())
     val borderWidth = if (highlight) 3.dp else 1.dp
     val borderBrush = if (highlight) {
         Brush.linearGradient(listOf(Accent1, Accent2))
@@ -4462,7 +4586,7 @@ internal fun AvatarBubble(avatar: Avatar, size: Dp, highlight: Boolean = false) 
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(size)
             .graphicsLayer {
                 scaleX = avatarScale
@@ -4473,26 +4597,16 @@ internal fun AvatarBubble(avatar: Avatar, size: Dp, highlight: Boolean = false) 
             .border(borderWidth, borderBrush, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = avatar.imageRes),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = if (highlight) 0.03f else 0.08f),
-                            Color.Transparent,
-                            Color.Black.copy(alpha = if (highlight) 0.08f else 0.16f)
-                        )
-                    )
-                )
-        )
+        if (profilePhoto != null) {
+            Image(profilePhoto, "Profile photo", Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+        } else {
+            Image(painterResource(id = avatar.imageRes), null, contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize().clip(CircleShape))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
+                Color.White.copy(alpha = if (highlight) 0.03f else 0.08f),
+                Color.Transparent,
+                Color.Black.copy(alpha = if (highlight) 0.08f else 0.16f)
+            ))))
+        }
     }
 }
